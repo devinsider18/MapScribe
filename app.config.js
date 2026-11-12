@@ -8,7 +8,7 @@ export default ({ config }) => ({
     orientation: 'portrait',
     ios: {
         ...config.ios,
-        bundleIdentifier: 'com.voronkov.mapscribe',
+        bundleIdentifier: 'ua.com.devinsider.mapscribe',
         infoPlist: {
             NSLocationWhenInUseUsageDescription: 'This app uses your location to show your position on the map.',
             NSLocationAlwaysAndWhenInUseUsageDescription: 'This app needs background location access to track your routes.',
@@ -16,7 +16,7 @@ export default ({ config }) => ({
     },
     android: {
         ...config.android,
-        package: 'com.voronkov.mapscribe',
+        package: 'ua.com.devinsider.mapscribe',
         permissions: [
             'ACCESS_FINE_LOCATION',
             'ACCESS_COARSE_LOCATION',
