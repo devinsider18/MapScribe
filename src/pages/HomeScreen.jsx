@@ -1,16 +1,15 @@
-import React from 'react';
-import { StyleSheet, SafeAreaView } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import MapViewComponent from '../components/MapViewComponent';
-export default function HomeScreen(){
-    return(
-        <SafeAreaView style={styles.container}>
-            <MapViewComponent />
-        </SafeAreaView>
-    )
+export default function HomeScreen() {
+  return (
+    <View style={styles.container}>
+      <MapViewComponent />
+    </View>
+  );
 }
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: '#fff',
-    },
+  container: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
 });
