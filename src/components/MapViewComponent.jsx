@@ -1,8 +1,9 @@
 import * as Location from 'expo-location';
 import { useEffect, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import MapView, { PROVIDER_GOOGLE } from 'react-native-maps';
-import { addMarkerToDb, getMarkers, initDatabase } from '../api/database';
+import { DEFAULT_LIST_TYPE } from '../constants/listCategories';
+import useSavedMarkers from '../hooks/useSavedMarkers';
 import MapMarkers from './MapMarkers';
 import SavePlaceModal from './SavePlaceModal';
 
@@ -12,74 +13,83 @@ const CLEAN_MAP_STYLE = [
 ];
 
 const MAP_DELTA = 0.02;
+const EMPTY_MODAL_STATE = {
+  visible: false,
+  coords: null,
+  title: '',
+  listType: DEFAULT_LIST_TYPE,
+};
+
+async function getInitialRegion() {
+  const { status } = await Location.requestForegroundPermissionsAsync();
+  if (status !== 'granted') return null;
+
+  const location = await Location.getCurrentPositionAsync();
+  return {
+    latitude: location.coords.latitude,
+    longitude: location.coords.longitude,
+    latitudeDelta: MAP_DELTA,
+    longitudeDelta: MAP_DELTA,
+  };
+}
 
 export default function MapViewComponent() {
   const [region, setRegion] = useState(null);
-  const [markers, setMarkers] = useState(() => {
-    try {
-      initDatabase();
-      return getMarkers().map((marker) => ({
-        id: marker.id,
-        coordinate: { latitude: marker.latitude, longitude: marker.longitude },
-        title: marker.title,
-        listType: marker.listType || 'want_to_go',
-      }));
-    } catch (error) {
-      console.error('Error loading markers on mount:', error);
-      return [];
-    }
-  });
-
-  const [modalState, setModalState] = useState({
-    visible: false,
-    coords: null,
-    title: '',
-    listType: 'want_to_go',
-  });
+  const { markers, loadError, addSavedMarker } = useSavedMarkers();
+  const [modalState, setModalState] = useState(EMPTY_MODAL_STATE);
+  const [saveError, setSaveError] = useState('');
 
   useEffect(() => {
-    (async () => {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') return;
-      const location = await Location.getCurrentPositionAsync();
-      setRegion({
-        latitude: location.coords.latitude,
-        longitude: location.coords.longitude,
-        latitudeDelta: MAP_DELTA,
-        longitudeDelta: MAP_DELTA,
+    let isMounted = true;
+
+    getInitialRegion()
+      .then((initialRegion) => {
+        if (isMounted && initialRegion) setRegion(initialRegion);
+      })
+      .catch((error) => {
+        console.error('Failed to get the initial map location:', error);
       });
-    })();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
-  // Перехватываем долгое нажатие и передаем координаты в модальное окно
-  const handleLongPress = (e) => {
-    const coords = e.nativeEvent.coordinate;
+  const handleLongPress = (event) => {
+    setSaveError('');
     setModalState({
       visible: true,
-      coords,
+      coords: event.nativeEvent.coordinate,
       title: '',
-      listType: 'want_to_go',
+      listType: DEFAULT_LIST_TYPE,
     });
   };
 
+  const handleCloseModal = () => {
+    setModalState(EMPTY_MODAL_STATE);
+    setSaveError('');
+  };
+
+  const handleTitleChange = (title) => {
+    setModalState((current) => ({ ...current, title }));
+  };
+
+  const handleListTypeChange = (listType) => {
+    setModalState((current) => ({ ...current, listType }));
+  };
+
   const handleSavePlace = () => {
-    if (!modalState.coords) return;
+    if (!modalState.coords) {
+      setSaveError('Select a location on the map before saving.');
+      return;
+    }
 
     try {
       const title = modalState.title.trim() || 'Unlabeled Place';
-      const id = addMarkerToDb(modalState.coords, title, modalState.listType);
-      setMarkers((prev) => [
-        ...prev,
-        {
-          id,
-          coordinate: modalState.coords,
-          title,
-          listType: modalState.listType,
-        },
-      ]);
-      setModalState({ visible: false, coords: null, title: '', listType: 'want_to_go' });
-    } catch (error) {
-      console.error('Error saving new marker:', error);
+      addSavedMarker(modalState.coords, title, modalState.listType);
+      handleCloseModal();
+    } catch {
+      setSaveError('Could not save this place. Please try again.');
     }
   };
 
@@ -98,9 +108,15 @@ export default function MapViewComponent() {
       >
         <MapMarkers markers={markers} />
       </MapView>
+      {loadError ? <Text style={styles.loadError}>{loadError}</Text> : null}
       <SavePlaceModal
-        modalState={modalState}
-        setModalState={setModalState}
+        visible={modalState.visible}
+        title={modalState.title}
+        selectedListType={modalState.listType}
+        errorMessage={saveError}
+        onTitleChange={handleTitleChange}
+        onListTypeChange={handleListTypeChange}
+        onClose={handleCloseModal}
         onSave={handleSavePlace}
       />
     </View>
@@ -110,4 +126,14 @@ export default function MapViewComponent() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   map: { flex: 1 },
+  loadError: {
+    position: 'absolute',
+    top: 12,
+    left: 12,
+    right: 12,
+    padding: 12,
+    borderRadius: 8,
+    backgroundColor: '#FCE8E6',
+    color: '#B3261E',
+  },
 });

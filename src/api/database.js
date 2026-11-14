@@ -1,4 +1,5 @@
 import * as SQLite from 'expo-sqlite';
+import { DEFAULT_LIST_TYPE } from '../constants/listCategories';
 
 const db = SQLite.openDatabaseSync('mapscribe.db');
 
@@ -10,13 +11,13 @@ export function initDatabase() {
         latitude REAL NOT NULL,
         longitude REAL NOT NULL,
         title TEXT,
-        listType TEXT DEFAULT 'want_to_go'
+        listType TEXT DEFAULT '${DEFAULT_LIST_TYPE}'
       );
     `);
 
     const columns = db.getAllSync('PRAGMA table_info(markers)');
     if (!columns.some((column) => column.name === 'listType')) {
-      db.execSync("ALTER TABLE markers ADD COLUMN listType TEXT DEFAULT 'want_to_go';");
+      db.execSync(`ALTER TABLE markers ADD COLUMN listType TEXT DEFAULT '${DEFAULT_LIST_TYPE}';`);
     }
   } catch (error) {
     console.error('Failed to initialize database:', error);
@@ -33,7 +34,7 @@ export function getMarkers() {
   }
 }
 
-export function addMarkerToDb(coordinate, title, listType = 'want_to_go') {
+export function addMarkerToDb(coordinate, title, listType = DEFAULT_LIST_TYPE) {
   try {
     const result = db.runSync(
       'INSERT INTO markers (latitude, longitude, title, listType) VALUES (?, ?, ?, ?);',

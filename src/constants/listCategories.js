@@ -1,6 +1,8 @@
+export const DEFAULT_LIST_TYPE = 'want_to_go';
+
 export const LIST_CATEGORIES = [
   {
-    id: 'want_to_go',
+    id: DEFAULT_LIST_TYPE,
     label: 'Want to go',
     icon: 'bookmark-border',
     color: '#1967D2',

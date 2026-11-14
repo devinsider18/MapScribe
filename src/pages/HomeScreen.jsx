@@ -1,5 +1,6 @@
 import { StyleSheet, View } from 'react-native';
 import MapViewComponent from '../components/MapViewComponent';
+
 export default function HomeScreen() {
   return (
     <View style={styles.container}>
@@ -7,6 +8,7 @@ export default function HomeScreen() {
     </View>
   );
 }
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,

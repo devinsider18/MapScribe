@@ -1,18 +1,28 @@
 import { MaterialIcons } from '@expo/vector-icons';
-import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Modal, Pressable, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { LIST_CATEGORIES } from '../constants/listCategories';
+import styles from './SavePlaceModal.styles';
 
-export default function SavePlaceModal({ modalState, setModalState, onSave }) {
+export default function SavePlaceModal({
+  visible,
+  title,
+  selectedListType,
+  errorMessage,
+  onTitleChange,
+  onListTypeChange,
+  onClose,
+  onSave,
+}) {
   return (
     <Modal
       animationType="fade"
       transparent
-      visible={modalState.visible}
-      onRequestClose={() => setModalState((prev) => ({ ...prev, visible: false }))}
+      visible={visible}
+      onRequestClose={onClose}
     >
       <Pressable
         style={styles.modalOverlay}
-        onPress={() => setModalState((prev) => ({ ...prev, visible: false }))}
+        onPress={onClose}
       >
         <Pressable style={styles.modalContent} onPress={(event) => event.stopPropagation()}>
           <Text style={styles.modalTitle}>Save Place</Text>
@@ -22,8 +32,8 @@ export default function SavePlaceModal({ modalState, setModalState, onSave }) {
             style={styles.input}
             placeholder="Place name (e.g., Best Coffee)"
             placeholderTextColor="#74777F"
-            value={modalState.title}
-            onChangeText={(text) => setModalState((prev) => ({ ...prev, title: text }))}
+            value={title}
+            onChangeText={onTitleChange}
             autoFocus
           />
 
@@ -31,7 +41,7 @@ export default function SavePlaceModal({ modalState, setModalState, onSave }) {
 
           <ScrollView style={styles.categoriesScroll} contentContainerStyle={styles.categoriesContainer}>
             {LIST_CATEGORIES.map((category) => {
-              const isSelected = modalState.listType === category.id;
+              const isSelected = selectedListType === category.id;
               return (
                 <TouchableOpacity
                   key={category.id}
@@ -40,7 +50,9 @@ export default function SavePlaceModal({ modalState, setModalState, onSave }) {
                     { backgroundColor: category.bg },
                     isSelected && styles.categoryChipSelected,
                   ]}
-                  onPress={() => setModalState((prev) => ({ ...prev, listType: category.id }))}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: isSelected }}
+                  onPress={() => onListTypeChange(category.id)}
                 >
                   <MaterialIcons name={category.icon} size={16} color={category.color} style={styles.categoryIcon} />
                   <Text style={[styles.categoryChipText, { color: category.color }]}>
@@ -54,124 +66,23 @@ export default function SavePlaceModal({ modalState, setModalState, onSave }) {
           <View style={styles.modalButtons}>
             <TouchableOpacity
               style={[styles.button, styles.cancelButton]}
-              onPress={() => setModalState((prev) => ({ ...prev, visible: false }))}
+              accessibilityRole="button"
+              onPress={onClose}
             >
               <Text style={styles.cancelButtonText}>Cancel</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={[styles.button, styles.saveButton]} onPress={onSave}>
+            <TouchableOpacity
+              style={[styles.button, styles.saveButton]}
+              accessibilityRole="button"
+              onPress={onSave}
+            >
               <Text style={styles.saveButtonText}>Save</Text>
             </TouchableOpacity>
           </View>
+          {errorMessage ? <Text style={styles.errorMessage}>{errorMessage}</Text> : null}
         </Pressable>
       </Pressable>
     </Modal>
   );
 }
-
-const styles = StyleSheet.create({
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  modalContent: {
-    width: '100%',
-    maxWidth: 360,
-    maxHeight: '80%',
-    backgroundColor: '#F8F9FA',
-    borderRadius: 28,
-    padding: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.25,
-    shadowRadius: 10,
-    elevation: 10,
-  },
-  modalTitle: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: '#1A1C1E',
-    marginBottom: 4,
-  },
-  modalSubtitle: {
-    fontSize: 14,
-    color: '#44474F',
-    marginBottom: 16,
-  },
-  input: {
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#74777F',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    fontSize: 16,
-    color: '#1A1C1E',
-    marginBottom: 16,
-  },
-  sectionLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#44474F',
-    marginBottom: 8,
-  },
-  categoriesScroll: {
-    maxHeight: 180,
-    marginBottom: 20,
-  },
-  categoriesContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    paddingBottom: 4,
-  },
-  categoryChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: 'transparent',
-  },
-  categoryChipSelected: {
-    borderColor: '#0B57D0',
-    borderWidth: 2,
-  },
-  categoryIcon: {
-    marginRight: 6,
-  },
-  categoryChipText: {
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  modalButtons: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    gap: 12,
-  },
-  button: {
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 20,
-  },
-  cancelButton: {
-    backgroundColor: 'transparent',
-  },
-  cancelButtonText: {
-    color: '#0B57D0',
-    fontWeight: '600',
-    fontSize: 14,
-  },
-  saveButton: {
-    backgroundColor: '#0B57D0',
-  },
-  saveButtonText: {
-    color: '#FFFFFF',
-    fontWeight: '600',
-    fontSize: 14,
-  },
-});
