@@ -4,16 +4,9 @@ export default ({ config }) => ({
     ...config,
     name: 'MapScribe',
     slug: 'mapscribe',
+    scheme: 'mapscribe',
     version: '1.0.0',
     orientation: 'portrait',
-    ios: {
-        ...config.ios,
-        bundleIdentifier: 'ua.com.devinsider.mapscribe',
-        infoPlist: {
-            NSLocationWhenInUseUsageDescription: 'This app uses your location to show your position on the map.',
-            NSLocationAlwaysAndWhenInUseUsageDescription: 'This app needs background location access to track your routes.',
-        },
-    },
     android: {
         ...config.android,
         package: 'ua.com.devinsider.mapscribe',

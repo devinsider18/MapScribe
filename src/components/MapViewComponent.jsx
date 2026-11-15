@@ -13,6 +13,7 @@ const CLEAN_MAP_STYLE = [
 ];
 
 const MAP_DELTA = 0.02;
+const LOCATION_UNAVAILABLE_MESSAGE = 'Location is unavailable. You can still browse the map and save places.';
 const EMPTY_MODAL_STATE = {
   visible: false,
   coords: null,
@@ -38,16 +39,31 @@ export default function MapViewComponent() {
   const { markers, loadError, addSavedMarker } = useSavedMarkers();
   const [modalState, setModalState] = useState(EMPTY_MODAL_STATE);
   const [saveError, setSaveError] = useState('');
+  const [locationNotice, setLocationNotice] = useState('');
 
   useEffect(() => {
     let isMounted = true;
 
     getInitialRegion()
       .then((initialRegion) => {
-        if (isMounted && initialRegion) setRegion(initialRegion);
+        if (!isMounted) return;
+
+        if (initialRegion) {
+          setRegion(initialRegion);
+        } else {
+          setLocationNotice(LOCATION_UNAVAILABLE_MESSAGE);
+        }
       })
       .catch((error) => {
+        if (!isMounted) return;
+
+        if (error?.code === 'ERR_CURRENT_LOCATION_IS_UNAVAILABLE') {
+          setLocationNotice(LOCATION_UNAVAILABLE_MESSAGE);
+          return;
+        }
+
         console.error('Failed to get the initial map location:', error);
+        setLocationNotice('Could not determine your location. You can still browse the map and save places.');
       });
 
     return () => {
@@ -99,7 +115,9 @@ export default function MapViewComponent() {
         provider={PROVIDER_GOOGLE}
         style={styles.map}
         showsUserLocation
-        showsMyLocationButton
+        showsMyLocationButton={false}
+        showsPointsOfInterests={false}
+        toolbarEnabled={false}
         initialRegion={region}
         region={region}
         onRegionChangeComplete={setRegion}
@@ -108,6 +126,7 @@ export default function MapViewComponent() {
       >
         <MapMarkers markers={markers} />
       </MapView>
+      {locationNotice ? <Text style={styles.locationNotice}>{locationNotice}</Text> : null}
       {loadError ? <Text style={styles.loadError}>{loadError}</Text> : null}
       <SavePlaceModal
         visible={modalState.visible}
@@ -126,6 +145,16 @@ export default function MapViewComponent() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   map: { flex: 1 },
+  locationNotice: {
+    position: 'absolute',
+    top: 12,
+    left: 12,
+    right: 12,
+    padding: 12,
+    borderRadius: 8,
+    backgroundColor: '#FFF4E5',
+    color: '#663C00',
+  },
   loadError: {
     position: 'absolute',
     top: 12,
