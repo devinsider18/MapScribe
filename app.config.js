@@ -17,6 +17,9 @@ export default ({ config }) => ({
         ],
     },
     plugins: [
+        'expo-router',
+        'expo-sqlite',
+        'expo-web-browser',
         [
             'react-native-maps',
             {
