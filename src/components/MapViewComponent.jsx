@@ -70,7 +70,9 @@ export default function MapViewComponent({ savedPlaces }) {
         }
 
         console.error('Failed to get the initial map location:', error);
-        setLocationNotice('Could not determine your location. You can still browse the map and save places.');
+        setLocationNotice(
+          'Could not determine your location. You can still browse the map and save places.'
+        );
       });
 
     return () => {

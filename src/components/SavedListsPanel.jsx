@@ -5,7 +5,6 @@ import {
   Modal,
   Pressable,
   ScrollView,
-  StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
@@ -14,6 +13,7 @@ import {
 import ListCategoryIcon from './ListCategoryIcon';
 import ListEmojiPicker from './ListEmojiPicker';
 import SavePlaceModal from './SavePlaceModal';
+import styles from './SavedListsPanel.styles';
 
 export default function SavedListsPanel({ savedPlaces }) {
   const {
@@ -171,86 +171,30 @@ export default function SavedListsPanel({ savedPlaces }) {
           const isExpanded = expandedList === category.id;
 
           return (
-            <View key={category.id} style={styles.listCard}>
-              <View style={styles.listHeader}>
-                <TouchableOpacity
-                  accessibilityRole="button"
-                  accessibilityState={{ expanded: isExpanded }}
-                  onPress={() => setExpandedList(isExpanded ? null : category.id)}
-                  style={styles.listHeaderMain}
-                >
-                  <View style={[styles.listIcon, { backgroundColor: category.bg }]}>
-                    <ListCategoryIcon category={category} size={22} color={category.color} />
-                  </View>
-                  <View style={styles.listInfo}>
-                    <Text style={styles.listName}>{category.label}</Text>
-                    <Text style={styles.placeCount}>
-                      {places.length} {places.length === 1 ? 'place' : 'places'}
-                    </Text>
-                  </View>
-                  <MaterialIcons
-                    name={isExpanded ? 'expand-less' : 'expand-more'}
-                    size={24}
-                    color="#49454F"
-                  />
-                </TouchableOpacity>
-                <TouchableOpacity
-                  accessibilityRole="button"
-                  accessibilityLabel={`Change ${category.label} icon`}
-                  onPress={() => {
-                    setIconError('');
-                    setIconListId(category.id);
-                    setIconDraft(category.emoji || '');
-                  }}
-                  style={styles.changeIconButton}
-                >
-                  <MaterialIcons name="edit" size={18} color="#49454F" />
-                </TouchableOpacity>
-              </View>
-
-              {isExpanded ? (
-                <View style={styles.places}>
-                  {places.length ? (
-                    places.map((place) => (
-                      <View key={place.id} style={styles.placeRow}>
-                        <MaterialIcons name="place" size={18} color={category.color} />
-                        <Text style={styles.placeName} numberOfLines={1}>{place.title}</Text>
-                        <TouchableOpacity
-                          accessibilityRole="button"
-                          accessibilityLabel={`Edit ${place.title}`}
-                          onPress={() => {
-                            setEditError('');
-                            setEditingPlace(place);
-                          }}
-                          style={styles.placeAction}
-                        >
-                          <MaterialIcons name="edit" size={18} color="#49454F" />
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                          accessibilityRole="button"
-                          accessibilityLabel={`Delete ${place.title}`}
-                          onPress={() => requestDeletePlace(place)}
-                          style={styles.placeAction}
-                        >
-                          <MaterialIcons name="delete-outline" size={19} color="#B3261E" />
-                        </TouchableOpacity>
-                      </View>
-                    ))
-                  ) : (
-                    <Text style={styles.emptyList}>No places yet</Text>
-                  )}
-                </View>
-              ) : null}
-            </View>
+            <SavedListCard
+              key={category.id}
+              category={category}
+              places={places}
+              expanded={isExpanded}
+              onToggle={() => setExpandedList(isExpanded ? null : category.id)}
+              onChangeIcon={() => {
+                setIconError('');
+                setIconListId(category.id);
+                setIconDraft(category.emoji || '');
+              }}
+              onEditPlace={(place) => {
+                setEditError('');
+                setEditingPlace(place);
+              }}
+              onDeletePlace={requestDeletePlace}
+            />
           );
         })}
       </ScrollView>
-      <SavePlaceModal
-        visible={Boolean(editingPlace)}
-        title={editingPlace?.title ?? ''}
-        selectedListType={editingPlace?.listType ?? ''}
+      <EditSavedPlaceDialog
+        place={editingPlace}
         errorMessage={editError}
-        isEditing
+        listCategories={listCategories}
         onTitleChange={(title) => setEditingPlace((place) => (
           place ? { ...place, title } : place
         ))}
@@ -261,319 +205,240 @@ export default function SavedListsPanel({ savedPlaces }) {
         onSave={saveEditedPlace}
         onDelete={() => editingPlace && requestDeletePlace(editingPlace)}
       />
-      <Modal
-        animationType="fade"
-        transparent
+      <CreateListDialog
         visible={createListVisible}
-        onRequestClose={closeCreateList}
-      >
-        <Pressable style={styles.createListOverlay} onPress={closeCreateList}>
-          <Pressable
-            style={styles.createListDialog}
-            onPress={(event) => event.stopPropagation()}
-          >
-            <Text style={styles.createListTitle}>Create a list</Text>
-            <Text style={styles.createListSubtitle}>Give your saved places a new home.</Text>
-            <TextInput
-              autoFocus
-              maxLength={40}
-              placeholder="List name"
-              placeholderTextColor="#74777F"
-              value={newListName}
-              onChangeText={(name) => {
-                setNewListName(name);
-                setCreateListError('');
-              }}
-              onSubmitEditing={handleCreateList}
-              returnKeyType="done"
-              style={styles.createListInput}
-            />
-            <Text style={styles.iconPickerLabel}>Emoji (optional)</Text>
-            <Text style={styles.iconPickerHint}>Tap the field and switch to your device&apos;s emoji keyboard.</Text>
-            <ListEmojiPicker
-              selectedEmoji={newListEmoji}
-              onEmojiChange={setNewListEmoji}
-            />
-            {createListError ? (
-              <Text style={styles.createListError}>{createListError}</Text>
-            ) : null}
-            <View style={styles.createListActions}>
-              <TouchableOpacity onPress={closeCreateList} style={styles.createListCancelButton}>
-                <Text style={styles.createListCancelText}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity onPress={handleCreateList} style={styles.createListSaveButton}>
-                <Text style={styles.createListSaveText}>Create</Text>
-              </TouchableOpacity>
-            </View>
-          </Pressable>
-        </Pressable>
-      </Modal>
-      <Modal
-        animationType="fade"
-        transparent
-        visible={Boolean(iconList)}
-        onRequestClose={() => setIconListId(null)}
-      >
-        <Pressable
-          style={styles.createListOverlay}
-          onPress={() => setIconListId(null)}
+        name={newListName}
+        emoji={newListEmoji}
+        errorMessage={createListError}
+        onNameChange={(name) => {
+          setNewListName(name);
+          setCreateListError('');
+        }}
+        onEmojiChange={setNewListEmoji}
+        onClose={closeCreateList}
+        onCreate={handleCreateList}
+      />
+      <EditListIconDialog
+        list={iconList}
+        emoji={iconDraft}
+        errorMessage={iconError}
+        onEmojiChange={setIconDraft}
+        onClose={() => setIconListId(null)}
+        onSave={handleSaveListIcon}
+      />
+    </View>
+  );
+}
+function SavedListCard({
+  category,
+  places,
+  expanded,
+  onToggle,
+  onChangeIcon,
+  onEditPlace,
+  onDeletePlace,
+}) {
+  return (
+    <View style={styles.card}>
+      <View style={styles.cardHeader}>
+        <TouchableOpacity
+          accessibilityRole="button"
+          accessibilityState={{ expanded }}
+          onPress={onToggle}
+          style={styles.cardHeaderMain}
         >
-          <Pressable
-            style={styles.createListDialog}
-            onPress={(event) => event.stopPropagation()}
-          >
-            <Text style={styles.createListTitle}>Change list icon</Text>
-            <Text style={styles.createListSubtitle}>{iconList?.label}</Text>
-            <Text style={styles.iconPickerHint}>Tap the field and switch to your device&apos;s emoji keyboard.</Text>
-            <ListEmojiPicker
-              selectedEmoji={iconDraft}
-              onEmojiChange={setIconDraft}
-              defaultIcon={iconList?.icon}
-              defaultColor={iconList?.color}
-            />
-            {iconError ? <Text style={styles.createListError}>{iconError}</Text> : null}
-            <View style={styles.createListActions}>
-              <TouchableOpacity
-                onPress={() => setIconListId(null)}
-                style={styles.createListCancelButton}
-              >
-                <Text style={styles.createListCancelText}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={handleSaveListIcon}
-                style={styles.createListSaveButton}
-              >
-                <Text style={styles.createListSaveText}>Save</Text>
-              </TouchableOpacity>
-            </View>
-          </Pressable>
-        </Pressable>
-      </Modal>
+          <View style={[styles.cardIcon, { backgroundColor: category.bg }]}>
+            <ListCategoryIcon category={category} size={22} color={category.color} />
+          </View>
+          <View style={styles.cardInfo}>
+            <Text style={styles.cardName}>{category.label}</Text>
+            <Text style={styles.cardCount}>
+              {places.length} {places.length === 1 ? 'place' : 'places'}
+            </Text>
+          </View>
+          <MaterialIcons
+            name={expanded ? 'expand-less' : 'expand-more'}
+            size={24}
+            color="#49454F"
+          />
+        </TouchableOpacity>
+        <TouchableOpacity
+          accessibilityRole="button"
+          accessibilityLabel={`Change ${category.label} icon`}
+          onPress={onChangeIcon}
+          style={styles.cardChangeIconButton}
+        >
+          <MaterialIcons name="edit" size={18} color="#49454F" />
+        </TouchableOpacity>
+      </View>
+
+      {expanded ? (
+        <View style={styles.cardPlaces}>
+          {places.length ? (
+            places.map((place) => (
+              <View key={place.id} style={styles.cardPlaceRow}>
+                <MaterialIcons name="place" size={18} color={category.color} />
+                <Text style={styles.cardPlaceName} numberOfLines={1}>{place.title}</Text>
+                <TouchableOpacity
+                  accessibilityRole="button"
+                  accessibilityLabel={`Edit ${place.title}`}
+                  onPress={() => onEditPlace(place)}
+                  style={styles.cardPlaceAction}
+                >
+                  <MaterialIcons name="edit" size={18} color="#49454F" />
+                </TouchableOpacity>
+                <TouchableOpacity
+                  accessibilityRole="button"
+                  accessibilityLabel={`Delete ${place.title}`}
+                  onPress={() => onDeletePlace(place)}
+                  style={styles.cardPlaceAction}
+                >
+                  <MaterialIcons name="delete-outline" size={19} color="#B3261E" />
+                </TouchableOpacity>
+              </View>
+            ))
+          ) : (
+            <Text style={styles.cardEmptyList}>No places yet</Text>
+          )}
+        </View>
+      ) : null}
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  panel: {
-    flex: 1,
-    backgroundColor: '#FEF7FF',
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
-    paddingTop: 10,
-    paddingHorizontal: 20,
-    paddingBottom: 8,
-    elevation: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.12,
-    shadowRadius: 12,
-  },
-  handle: {
-    alignSelf: 'center',
-    width: 32,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: '#C8C5D0',
-    marginBottom: 12,
-  },
-  title: {
-    color: '#1D1B20',
-    fontSize: 24,
-    fontWeight: '700',
-  },
-  subtitle: {
-    color: '#625D67',
-    fontSize: 14,
-    marginTop: 4,
-    marginBottom: 14,
-  },
-  createListButton: {
-    minHeight: 44,
-    alignSelf: 'flex-start',
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 16,
-    borderRadius: 22,
-    backgroundColor: '#D3E3FD',
-    marginBottom: 12,
-  },
-  createListButtonText: {
-    color: '#1D1B20',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  error: {
-    color: '#B3261E',
-    backgroundColor: '#FCE8E6',
-    padding: 12,
-    borderRadius: 12,
-    marginBottom: 12,
-  },
-  listContainer: {
-    gap: 10,
-    paddingBottom: 12,
-  },
-  listCard: {
-    overflow: 'hidden',
-    borderRadius: 18,
-    backgroundColor: '#F3EFF7',
-  },
-  listHeader: {
-    minHeight: 68,
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingLeft: 14,
-    paddingRight: 8,
-    paddingVertical: 10,
-  },
-  listHeaderMain: {
-    flex: 1,
-    minHeight: 48,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  listIcon: {
-    width: 42,
-    height: 42,
-    borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 12,
-  },
-  listInfo: {
-    flex: 1,
-  },
-  changeIconButton: {
-    width: 40,
-    height: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 20,
-    backgroundColor: '#EAE6EF',
-    marginLeft: 8,
-  },
-  listName: {
-    color: '#1D1B20',
-    fontSize: 15,
-    fontWeight: '600',
-  },
-  placeCount: {
-    color: '#625D67',
-    fontSize: 13,
-    marginTop: 3,
-  },
-  places: {
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: '#D9D4DE',
-    paddingHorizontal: 18,
-    paddingVertical: 6,
-  },
-  placeRow: {
-    minHeight: 42,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  placeName: {
-    flex: 1,
-    color: '#1D1B20',
-    fontSize: 14,
-  },
-  placeAction: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#EAE6EF',
-  },
-  emptyList: {
-    color: '#625D67',
-    fontSize: 14,
-    paddingVertical: 10,
-    paddingLeft: 30,
-  },
-  createListOverlay: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-    backgroundColor: 'rgba(0, 0, 0, 0.45)',
-  },
-  createListDialog: {
-    width: '100%',
-    maxWidth: 380,
-    padding: 24,
-    borderRadius: 28,
-    backgroundColor: '#F8F9FA',
-  },
-  createListTitle: {
-    color: '#1D1B20',
-    fontSize: 22,
-    fontWeight: '700',
-  },
-  createListSubtitle: {
-    color: '#625D67',
-    fontSize: 14,
-    marginTop: 6,
-    marginBottom: 18,
-  },
-  iconPickerLabel: {
-    color: '#44474F',
-    fontSize: 14,
-    fontWeight: '600',
-    marginTop: 16,
-    marginBottom: 6,
-  },
-  iconPickerHint: {
-    color: '#625D67',
-    fontSize: 13,
-    marginBottom: 10,
-  },
-  createListInput: {
-    minHeight: 52,
-    paddingHorizontal: 16,
-    borderWidth: 1,
-    borderColor: '#74777F',
-    borderRadius: 16,
-    color: '#1D1B20',
-    backgroundColor: '#FFFFFF',
-    fontSize: 16,
-  },
-  createListError: {
-    color: '#B3261E',
-    fontSize: 13,
-    marginTop: 8,
-  },
-  createListActions: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    alignItems: 'center',
-    gap: 12,
-    marginTop: 20,
-  },
-  createListCancelButton: {
-    minHeight: 40,
-    justifyContent: 'center',
-    paddingHorizontal: 16,
-    borderRadius: 20,
-  },
-  createListCancelText: {
-    color: '#0B57D0',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  createListSaveButton: {
-    minHeight: 40,
-    justifyContent: 'center',
-    paddingHorizontal: 20,
-    borderRadius: 20,
-    backgroundColor: '#0B57D0',
-  },
-  createListSaveText: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-});
+function EditSavedPlaceDialog({
+  place,
+  errorMessage,
+  listCategories,
+  onTitleChange,
+  onListTypeChange,
+  onClose,
+  onSave,
+  onDelete,
+}) {
+  return (
+    <SavePlaceModal
+      visible={Boolean(place)}
+      title={place?.title ?? ''}
+      selectedListType={place?.listType ?? ''}
+      errorMessage={errorMessage}
+      listCategories={listCategories}
+      isEditing
+      onTitleChange={onTitleChange}
+      onListTypeChange={onListTypeChange}
+      onClose={onClose}
+      onSave={onSave}
+      onDelete={onDelete}
+    />
+  );
+}
+
+function CreateListDialog({
+  visible,
+  name,
+  emoji,
+  errorMessage,
+  onNameChange,
+  onEmojiChange,
+  onClose,
+  onCreate,
+}) {
+  return (
+    <Modal
+      animationType="fade"
+      transparent
+      visible={visible}
+      onRequestClose={onClose}
+    >
+      <Pressable style={styles.dialogOverlay} onPress={onClose}>
+        <Pressable
+          style={styles.dialogContent}
+          onPress={(event) => event.stopPropagation()}
+        >
+          <Text style={styles.dialogTitle}>Create a list</Text>
+          <Text style={styles.dialogSubtitle}>Give your saved places a new home.</Text>
+          <TextInput
+            autoFocus
+            maxLength={40}
+            placeholder="List name"
+            placeholderTextColor="#74777F"
+            value={name}
+            onChangeText={onNameChange}
+            onSubmitEditing={onCreate}
+            returnKeyType="done"
+            style={styles.dialogNameInput}
+          />
+          <Text style={styles.dialogEmojiLabel}>Emoji (optional)</Text>
+          <Text style={styles.dialogHint}>
+            Tap the field and switch to your device&apos;s emoji keyboard.
+          </Text>
+          <ListEmojiPicker selectedEmoji={emoji} onEmojiChange={onEmojiChange} />
+          {errorMessage ? <Text style={styles.dialogError}>{errorMessage}</Text> : null}
+          <DialogActions
+            cancelLabel="Cancel"
+            saveLabel="Create"
+            onClose={onClose}
+            onSave={onCreate}
+          />
+        </Pressable>
+      </Pressable>
+    </Modal>
+  );
+}
+
+function EditListIconDialog({
+  list,
+  emoji,
+  errorMessage,
+  onEmojiChange,
+  onClose,
+  onSave,
+}) {
+  return (
+    <Modal
+      animationType="fade"
+      transparent
+      visible={Boolean(list)}
+      onRequestClose={onClose}
+    >
+      <Pressable style={styles.dialogOverlay} onPress={onClose}>
+        <Pressable
+          style={styles.dialogContent}
+          onPress={(event) => event.stopPropagation()}
+        >
+          <Text style={styles.dialogTitle}>Change list icon</Text>
+          <Text style={styles.dialogSubtitle}>{list?.label}</Text>
+          <Text style={styles.dialogHint}>
+            Tap the field and switch to your device&apos;s emoji keyboard.
+          </Text>
+          <ListEmojiPicker
+            selectedEmoji={emoji}
+            onEmojiChange={onEmojiChange}
+            defaultIcon={list?.icon}
+            defaultColor={list?.color}
+          />
+          {errorMessage ? <Text style={styles.dialogError}>{errorMessage}</Text> : null}
+          <DialogActions
+            cancelLabel="Cancel"
+            saveLabel="Save"
+            onClose={onClose}
+            onSave={onSave}
+          />
+        </Pressable>
+      </Pressable>
+    </Modal>
+  );
+}
+
+function DialogActions({ cancelLabel, saveLabel, onClose, onSave }) {
+  return (
+    <View style={styles.dialogActions}>
+      <TouchableOpacity onPress={onClose} style={styles.dialogCancelButton}>
+        <Text style={styles.dialogCancelText}>{cancelLabel}</Text>
+      </TouchableOpacity>
+      <TouchableOpacity onPress={onSave} style={styles.dialogSaveButton}>
+        <Text style={styles.dialogSaveText}>{saveLabel}</Text>
+      </TouchableOpacity>
+    </View>
+  );
+}

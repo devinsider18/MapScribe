@@ -5,7 +5,9 @@ import ListCategoryIcon from './ListCategoryIcon';
 
 export default function MapMarkers({ markers, onMarkerPress, listCategories = LIST_CATEGORIES }) {
   return markers.map((marker) => {
-    const styleConfig = listCategories.find((category) => category.id === marker.listType) || listCategories[0];
+    const styleConfig = listCategories.find(
+      (category) => category.id === marker.listType
+    ) || listCategories[0];
 
     return (
       <Marker

@@ -30,7 +30,9 @@ export default function SavePlaceModal({
         <Pressable style={styles.modalContent} onPress={(event) => event.stopPropagation()}>
           <Text style={styles.modalTitle}>{isEditing ? 'Edit Place' : 'Save Place'}</Text>
           <Text style={styles.modalSubtitle}>
-            {isEditing ? 'Update the name or list for this place.' : 'Add custom name and choose a list for this location.'}
+            {isEditing
+              ? 'Update the name or list for this place.'
+              : 'Add custom name and choose a list for this location.'}
           </Text>
 
           <TextInput

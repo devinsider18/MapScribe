@@ -64,7 +64,14 @@ export function createSavedList(storage, name) {
   if (!trimmedName) throw new Error('List name is required.');
 
   const existingLists = storage.getLists();
-  if (existingLists.some((list) => list.name.localeCompare(trimmedName, undefined, { sensitivity: 'accent' }) === 0)) {
+  const hasDuplicateName = existingLists.some((list) => (
+    list.name.localeCompare(
+      trimmedName,
+      undefined,
+      { sensitivity: 'accent' }
+    ) === 0
+  ));
+  if (hasDuplicateName) {
     throw new Error('A list with this name already exists.');
   }
 
