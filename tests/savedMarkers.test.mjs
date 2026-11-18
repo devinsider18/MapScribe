@@ -2,8 +2,10 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
   createInitialSavedMarkersState,
+  deleteSavedMarker,
   loadSavedMarkers,
   saveMarkerToDatabase,
+  updateSavedMarker,
 } from '../src/models/savedMarkers.mjs';
 
 function createStorage({ markers = [], insertId = 1, error = null } = {}) {
@@ -19,6 +21,14 @@ function createStorage({ markers = [], insertId = 1, error = null } = {}) {
       if (error) throw error;
       this.inserted = { coordinate, title, listType };
       return insertId;
+    },
+    update(id, coordinate, title, listType) {
+      if (error) throw error;
+      this.updated = { id, coordinate, title, listType };
+    },
+    delete(id) {
+      if (error) throw error;
+      this.deletedId = id;
     },
   };
 }
@@ -74,4 +84,42 @@ test('does not return a saved marker when persistence fails', () => {
   const storage = createStorage({ error: new Error('disk error') });
 
   assert.throws(() => saveMarkerToDatabase(storage, { latitude: 0, longitude: 0 }, 'Place', 'favorites'));
+});
+
+test('persists updated marker details before returning the updated marker', () => {
+  const storage = createStorage();
+  const coordinate = { latitude: 48.8, longitude: 2.3 };
+
+  assert.deepEqual(
+    updateSavedMarker(storage, 12, coordinate, 'New title', 'favorites'),
+    { id: 12, coordinate, title: 'New title', listType: 'favorites' }
+  );
+  assert.deepEqual(storage.updated, {
+    id: 12,
+    coordinate,
+    title: 'New title',
+    listType: 'favorites',
+  });
+});
+
+test('does not return updated marker details when persistence fails', () => {
+  const storage = createStorage({ error: new Error('disk error') });
+
+  assert.throws(() => (
+    updateSavedMarker(storage, 12, { latitude: 0, longitude: 0 }, 'Place', 'favorites')
+  ));
+});
+
+test('deletes a marker from persistent storage', () => {
+  const storage = createStorage();
+
+  deleteSavedMarker(storage, 12);
+
+  assert.equal(storage.deletedId, 12);
+});
+
+test('does not report a deleted marker when persistence fails', () => {
+  const storage = createStorage({ error: new Error('disk error') });
+
+  assert.throws(() => deleteSavedMarker(storage, 12));
 });

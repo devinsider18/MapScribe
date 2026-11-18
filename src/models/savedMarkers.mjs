@@ -33,3 +33,18 @@ export function saveMarkerToDatabase(storage, coordinate, title, listType) {
     listType,
   };
 }
+
+export function updateSavedMarker(storage, id, coordinate, title, listType) {
+  storage.update(id, coordinate, title, listType);
+
+  return {
+    id,
+    coordinate,
+    title,
+    listType,
+  };
+}
+
+export function deleteSavedMarker(storage, id) {
+  storage.delete(id);
+}

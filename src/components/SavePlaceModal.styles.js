@@ -69,7 +69,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 12,
     paddingVertical: 8,
-    borderRadius: 10,
+    borderRadius: 999,
     borderWidth: 1,
     borderColor: 'transparent',
   },
@@ -86,16 +86,25 @@ const styles = StyleSheet.create({
   },
   modalButtons: {
     flexDirection: 'row',
-    justifyContent: 'flex-end',
+    alignItems: 'center',
     gap: 12,
   },
   button: {
     paddingVertical: 10,
     paddingHorizontal: 20,
-    borderRadius: 20,
+    borderRadius: 999,
   },
   cancelButton: {
     backgroundColor: 'transparent',
+    marginLeft: 'auto',
+  },
+  deleteButton: {
+    backgroundColor: '#FCE8E6',
+  },
+  deleteButtonText: {
+    color: '#B3261E',
+    fontWeight: '600',
+    fontSize: 14,
   },
   cancelButtonText: {
     color: '#0B57D0',

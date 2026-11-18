@@ -1,6 +1,6 @@
 import * as Location from 'expo-location';
 import { useEffect, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Alert, StyleSheet, Text, View } from 'react-native';
 import MapView, { PROVIDER_GOOGLE } from 'react-native-maps';
 import { DEFAULT_LIST_TYPE } from '../constants/listCategories';
 import useSavedMarkers from '../hooks/useSavedMarkers';
@@ -19,6 +19,7 @@ const EMPTY_MODAL_STATE = {
   coords: null,
   title: '',
   listType: DEFAULT_LIST_TYPE,
+  markerId: null,
 };
 
 async function getInitialRegion() {
@@ -36,7 +37,13 @@ async function getInitialRegion() {
 
 export default function MapViewComponent() {
   const [region, setRegion] = useState(null);
-  const { markers, loadError, addSavedMarker } = useSavedMarkers();
+  const {
+    markers,
+    loadError,
+    addSavedMarker,
+    updateSavedMarker,
+    deleteSavedMarker,
+  } = useSavedMarkers();
   const [modalState, setModalState] = useState(EMPTY_MODAL_STATE);
   const [saveError, setSaveError] = useState('');
   const [locationNotice, setLocationNotice] = useState('');
@@ -78,6 +85,18 @@ export default function MapViewComponent() {
       coords: event.nativeEvent.coordinate,
       title: '',
       listType: DEFAULT_LIST_TYPE,
+      markerId: null,
+    });
+  };
+
+  const handleMarkerPress = (marker) => {
+    setSaveError('');
+    setModalState({
+      visible: true,
+      coords: marker.coordinate,
+      title: marker.title,
+      listType: marker.listType,
+      markerId: marker.id,
     });
   };
 
@@ -102,11 +121,41 @@ export default function MapViewComponent() {
 
     try {
       const title = modalState.title.trim() || 'Unlabeled Place';
-      addSavedMarker(modalState.coords, title, modalState.listType);
+      if (modalState.markerId === null) {
+        addSavedMarker(modalState.coords, title, modalState.listType);
+      } else {
+        updateSavedMarker(modalState.markerId, modalState.coords, title, modalState.listType);
+      }
       handleCloseModal();
-    } catch {
+    } catch (error) {
+      console.error('Failed to save place:', error);
       setSaveError('Could not save this place. Please try again.');
     }
+  };
+
+  const handleDeletePlace = () => {
+    if (modalState.markerId === null) return;
+
+    Alert.alert(
+      'Delete place?',
+      `Remove "${modalState.title}" from your saved places?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: () => {
+            try {
+              deleteSavedMarker(modalState.markerId);
+              handleCloseModal();
+            } catch (error) {
+              console.error('Failed to delete place:', error);
+              setSaveError('Could not delete this place. Please try again.');
+            }
+          },
+        },
+      ]
+    );
   };
 
   return (
@@ -124,7 +173,7 @@ export default function MapViewComponent() {
         customMapStyle={CLEAN_MAP_STYLE}
         onLongPress={handleLongPress}
       >
-        <MapMarkers markers={markers} />
+        <MapMarkers markers={markers} onMarkerPress={handleMarkerPress} />
       </MapView>
       {locationNotice ? <Text style={styles.locationNotice}>{locationNotice}</Text> : null}
       {loadError ? <Text style={styles.loadError}>{loadError}</Text> : null}
@@ -133,10 +182,12 @@ export default function MapViewComponent() {
         title={modalState.title}
         selectedListType={modalState.listType}
         errorMessage={saveError}
+        isEditing={modalState.markerId !== null}
         onTitleChange={handleTitleChange}
         onListTypeChange={handleListTypeChange}
         onClose={handleCloseModal}
         onSave={handleSavePlace}
+        onDelete={handleDeletePlace}
       />
     </View>
   );

@@ -73,9 +73,9 @@ function TabButton({
       accessibilityRole="button"
       accessibilityState={{ selected: active }}
       onPress={onPress}
-      style={styles.tabButton}
+      style={[styles.tabButton, active && styles.activeTabButton]}
     >
-      <View style={[styles.tabIcon, active && styles.activeTabIcon]}>
+      <View style={styles.tabIcon}>
         <MaterialIcons name={icon} size={24} color={active ? '#1D1B20' : '#49454F'} />
       </View>
       <Text style={[styles.tabLabel, active && styles.activeTabLabel]}>{label}</Text>
@@ -105,20 +105,24 @@ const styles = StyleSheet.create({
     backgroundColor: '#F7F2FA',
   },
   tabButton: {
-    minWidth: 96,
+    minWidth: 132,
+    minHeight: 56,
     alignItems: 'center',
     justifyContent: 'center',
     gap: 2,
+    paddingHorizontal: 20,
+    paddingVertical: 4,
+    borderRadius: 28,
+    backgroundColor: '#F3EFF7',
+  },
+  activeTabButton: {
+    backgroundColor: '#D3E3FD',
   },
   tabIcon: {
     width: 64,
     height: 32,
-    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  activeTabIcon: {
-    backgroundColor: '#D3E3FD',
   },
   tabLabel: {
     color: '#49454F',

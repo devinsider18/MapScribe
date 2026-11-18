@@ -3,7 +3,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { Marker } from 'react-native-maps';
 import { LIST_CATEGORIES } from '../constants/listCategories';
 
-export default function MapMarkers({ markers }) {
+export default function MapMarkers({ markers, onMarkerPress }) {
   return markers.map((marker) => {
     const styleConfig = LIST_CATEGORIES.find((category) => category.id === marker.listType) || LIST_CATEGORIES[0];
 
@@ -11,8 +11,8 @@ export default function MapMarkers({ markers }) {
       <Marker
         key={`marker-${marker.id}`}
         coordinate={marker.coordinate}
-        title={marker.title}
         anchor={{ x: 0.5, y: 1 }}
+        onPress={() => onMarkerPress(marker)}
       >
         <View style={[styles.pillContainer, { backgroundColor: styleConfig.bg }]}>
           <MaterialIcons name={styleConfig.icon} size={14} color={styleConfig.color} style={styles.pillIcon} />

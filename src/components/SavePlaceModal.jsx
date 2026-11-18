@@ -8,10 +8,12 @@ export default function SavePlaceModal({
   title,
   selectedListType,
   errorMessage,
+  isEditing,
   onTitleChange,
   onListTypeChange,
   onClose,
   onSave,
+  onDelete,
 }) {
   return (
     <Modal
@@ -25,8 +27,10 @@ export default function SavePlaceModal({
         onPress={onClose}
       >
         <Pressable style={styles.modalContent} onPress={(event) => event.stopPropagation()}>
-          <Text style={styles.modalTitle}>Save Place</Text>
-          <Text style={styles.modalSubtitle}>Add custom name and choose a list for this location.</Text>
+          <Text style={styles.modalTitle}>{isEditing ? 'Edit Place' : 'Save Place'}</Text>
+          <Text style={styles.modalSubtitle}>
+            {isEditing ? 'Update the name or list for this place.' : 'Add custom name and choose a list for this location.'}
+          </Text>
 
           <TextInput
             style={styles.input}
@@ -64,6 +68,15 @@ export default function SavePlaceModal({
           </ScrollView>
 
           <View style={styles.modalButtons}>
+            {isEditing ? (
+              <TouchableOpacity
+                style={[styles.button, styles.deleteButton]}
+                accessibilityRole="button"
+                onPress={onDelete}
+              >
+                <Text style={styles.deleteButtonText}>Delete</Text>
+              </TouchableOpacity>
+            ) : null}
             <TouchableOpacity
               style={[styles.button, styles.cancelButton]}
               accessibilityRole="button"
@@ -77,7 +90,7 @@ export default function SavePlaceModal({
               accessibilityRole="button"
               onPress={onSave}
             >
-              <Text style={styles.saveButtonText}>Save</Text>
+              <Text style={styles.saveButtonText}>{isEditing ? 'Save changes' : 'Save'}</Text>
             </TouchableOpacity>
           </View>
           {errorMessage ? <Text style={styles.errorMessage}>{errorMessage}</Text> : null}

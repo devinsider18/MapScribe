@@ -46,3 +46,26 @@ export function addMarkerToDb(coordinate, title, listType = DEFAULT_LIST_TYPE) {
     throw error;
   }
 }
+
+export function updateMarkerInDb(id, coordinate, title, listType) {
+  try {
+    const result = db.runSync(
+      'UPDATE markers SET latitude = ?, longitude = ?, title = ?, listType = ? WHERE id = ?;',
+      [coordinate.latitude, coordinate.longitude, title, listType, id]
+    );
+    if (result.changes === 0) throw new Error(`Saved place ${id} was not found.`);
+  } catch (error) {
+    console.error('Failed to update marker in database:', error);
+    throw error;
+  }
+}
+
+export function deleteMarkerFromDb(id) {
+  try {
+    const result = db.runSync('DELETE FROM markers WHERE id = ?;', [id]);
+    if (result.changes === 0) throw new Error(`Saved place ${id} was not found.`);
+  } catch (error) {
+    console.error('Failed to delete marker from database:', error);
+    throw error;
+  }
+}
