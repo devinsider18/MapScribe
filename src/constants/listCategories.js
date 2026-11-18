@@ -1,3 +1,5 @@
+import { COLORS } from './theme';
+
 export const DEFAULT_LIST_TYPE = 'want_to_go';
 
 export const LIST_CATEGORIES = [
@@ -5,42 +7,42 @@ export const LIST_CATEGORIES = [
     id: DEFAULT_LIST_TYPE,
     label: 'Want to go',
     icon: 'bookmark-border',
-    color: '#1967D2',
-    bg: '#E8F0FE',
+    color: COLORS.listWantToGo,
+    bg: COLORS.listWantToGoSurface,
   },
   {
     id: 'favorites',
     label: 'Favorites',
     icon: 'favorite',
-    color: '#D93025',
-    bg: '#FCE8E6',
+    color: COLORS.listFavorite,
+    bg: COLORS.dangerContainer,
   },
   {
     id: 'starred_places',
     label: 'Starred places',
     icon: 'star',
-    color: '#F9AB00',
-    bg: '#FEF7E0',
+    color: COLORS.listStarred,
+    bg: COLORS.listStarredSurface,
   },
   {
     id: 'labeled',
     label: 'Labeled',
     icon: 'label',
-    color: '#188038',
-    bg: '#E6F4EA',
+    color: COLORS.listLabeled,
+    bg: COLORS.listLabeledSurface,
   },
   {
     id: 'travel_plans',
     label: 'Travel Plans',
     icon: 'flight',
-    color: '#5F6368',
-    bg: '#E8EAED',
+    color: COLORS.listTravel,
+    bg: COLORS.listTravelSurface,
   },
   {
     id: 'saved_trips',
     label: 'Saved trips',
     icon: 'card-travel',
-    color: '#9334E6',
-    bg: '#F3E8FD',
+    color: COLORS.listTrips,
+    bg: COLORS.listTripsSurface,
   },
 ];

@@ -3,16 +3,23 @@ import { useEffect, useState } from 'react';
 import { Alert, StyleSheet, Text, View } from 'react-native';
 import MapView, { PROVIDER_GOOGLE } from 'react-native-maps';
 import { DEFAULT_LIST_TYPE } from '../constants/listCategories';
+import {
+  CLEAN_MAP_STYLE,
+  LOCATION_NOTICE_INSET,
+  MAP_DELTA,
+} from '../constants/mapConfig';
+import {
+  ACTION_LABELS,
+  DEFAULT_PLACE_TITLE,
+  DELETE_PLACE_FAILURE,
+  DELETE_PLACE_TITLE,
+  LOCATION_LOOKUP_FAILED,
+  LOCATION_UNAVAILABLE,
+} from '../constants/messages.mjs';
+import { COLORS, RADII, SPACING } from '../constants/theme';
 import MapMarkers from './MapMarkers';
 import SavePlaceModal from './SavePlaceModal';
 
-const CLEAN_MAP_STYLE = [
-  { featureType: 'poi', elementType: 'all', stylers: [{ visibility: 'off' }] },
-  { featureType: 'transit', elementType: 'all', stylers: [{ visibility: 'off' }] },
-];
-
-const MAP_DELTA = 0.02;
-const LOCATION_UNAVAILABLE_MESSAGE = 'Location is unavailable. You can still browse the map and save places.';
 const EMPTY_MODAL_STATE = {
   visible: false,
   coords: null,
@@ -21,6 +28,7 @@ const EMPTY_MODAL_STATE = {
   markerId: null,
 };
 
+/** @returns {Promise<import('react-native-maps').Region | null>} */
 async function getInitialRegion() {
   const { status } = await Location.requestForegroundPermissionsAsync();
   if (status !== 'granted') return null;
@@ -34,6 +42,11 @@ async function getInitialRegion() {
   };
 }
 
+/**
+ * @param {{
+ *   savedPlaces: ReturnType<typeof import('../hooks/useSavedMarkers').default>
+ * }} props
+ */
 export default function MapViewComponent({ savedPlaces }) {
   const [region, setRegion] = useState(null);
   const {
@@ -58,21 +71,19 @@ export default function MapViewComponent({ savedPlaces }) {
         if (initialRegion) {
           setRegion(initialRegion);
         } else {
-          setLocationNotice(LOCATION_UNAVAILABLE_MESSAGE);
+          setLocationNotice(LOCATION_UNAVAILABLE);
         }
       })
       .catch((error) => {
         if (!isMounted) return;
 
         if (error?.code === 'ERR_CURRENT_LOCATION_IS_UNAVAILABLE') {
-          setLocationNotice(LOCATION_UNAVAILABLE_MESSAGE);
+          setLocationNotice(LOCATION_UNAVAILABLE);
           return;
         }
 
         console.error('Failed to get the initial map location:', error);
-        setLocationNotice(
-          'Could not determine your location. You can still browse the map and save places.'
-        );
+        setLocationNotice(LOCATION_LOOKUP_FAILED);
       });
 
     return () => {
@@ -122,7 +133,7 @@ export default function MapViewComponent({ savedPlaces }) {
     }
 
     try {
-      const title = modalState.title.trim() || 'Unlabeled Place';
+      const title = modalState.title.trim() || DEFAULT_PLACE_TITLE;
       if (modalState.markerId === null) {
         addSavedMarker(modalState.coords, title, modalState.listType);
       } else {
@@ -139,12 +150,12 @@ export default function MapViewComponent({ savedPlaces }) {
     if (modalState.markerId === null) return;
 
     Alert.alert(
-      'Delete place?',
+      DELETE_PLACE_TITLE,
       `Remove "${modalState.title}" from your saved places?`,
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: ACTION_LABELS.cancel, style: 'cancel' },
         {
-          text: 'Delete',
+          text: ACTION_LABELS.delete,
           style: 'destructive',
           onPress: () => {
             try {
@@ -152,7 +163,7 @@ export default function MapViewComponent({ savedPlaces }) {
               handleCloseModal();
             } catch (error) {
               console.error('Failed to delete place:', error);
-              setSaveError('Could not delete this place. Please try again.');
+              setSaveError(DELETE_PLACE_FAILURE);
             }
           },
         },
@@ -205,22 +216,22 @@ const styles = StyleSheet.create({
   map: { flex: 1 },
   locationNotice: {
     position: 'absolute',
-    top: 12,
-    left: 12,
-    right: 12,
-    padding: 12,
-    borderRadius: 8,
-    backgroundColor: '#FFF4E5',
-    color: '#663C00',
+    top: LOCATION_NOTICE_INSET,
+    left: LOCATION_NOTICE_INSET,
+    right: LOCATION_NOTICE_INSET,
+    padding: SPACING.md,
+    borderRadius: RADII.sm,
+    backgroundColor: COLORS.warningSurface,
+    color: COLORS.warningText,
   },
   loadError: {
     position: 'absolute',
-    top: 12,
-    left: 12,
-    right: 12,
-    padding: 12,
-    borderRadius: 8,
-    backgroundColor: '#FCE8E6',
-    color: '#B3261E',
+    top: LOCATION_NOTICE_INSET,
+    left: LOCATION_NOTICE_INSET,
+    right: LOCATION_NOTICE_INSET,
+    padding: SPACING.md,
+    borderRadius: RADII.sm,
+    backgroundColor: COLORS.dangerContainer,
+    color: COLORS.danger,
   },
 });

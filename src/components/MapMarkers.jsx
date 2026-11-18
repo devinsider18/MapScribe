@@ -1,8 +1,29 @@
 import { StyleSheet, Text, View } from 'react-native';
 import { Marker } from 'react-native-maps';
 import { LIST_CATEGORIES } from '../constants/listCategories';
+import { MAP_MARKER_LAYOUT } from '../constants/mapConfig';
+import { COLORS, FONT_SIZE, ICON_SIZE, RADII, SPACING } from '../constants/theme';
 import ListCategoryIcon from './ListCategoryIcon';
 
+/**
+ * @param {{
+ *   markers: Array<{
+ *     id: number,
+ *     coordinate: { latitude: number, longitude: number },
+ *     title: string,
+ *     listType: string
+ *   }>,
+ *   onMarkerPress: (marker: object) => void,
+ *   listCategories?: Array<{
+ *     id: string,
+ *     label: string,
+ *     icon: string,
+ *     color: string,
+ *     bg: string,
+ *     emoji?: string | null
+ *   }>
+ * }} props
+ */
 export default function MapMarkers({ markers, onMarkerPress, listCategories = LIST_CATEGORIES }) {
   return markers.map((marker) => {
     const styleConfig = listCategories.find(
@@ -19,7 +40,7 @@ export default function MapMarkers({ markers, onMarkerPress, listCategories = LI
         <View style={[styles.pillContainer, { backgroundColor: styleConfig.bg }]}>
           <ListCategoryIcon
             category={styleConfig}
-            size={14}
+            size={ICON_SIZE.marker}
             color={styleConfig.color}
             style={styles.pillIcon}
           />
@@ -36,23 +57,23 @@ const styles = StyleSheet.create({
   pillContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 16,
+    paddingHorizontal: MAP_MARKER_LAYOUT.horizontalPadding,
+    paddingVertical: MAP_MARKER_LAYOUT.verticalPadding,
+    borderRadius: RADII.lg,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.6)',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 6,
+    borderColor: COLORS.markerBorder,
+    shadowColor: COLORS.black,
+    shadowOffset: { width: 0, height: SPACING.xs },
+    shadowOpacity: MAP_MARKER_LAYOUT.shadowOpacity,
+    shadowRadius: MAP_MARKER_LAYOUT.shadowRadius,
+    elevation: MAP_MARKER_LAYOUT.elevation,
   },
   pillIcon: {
-    marginRight: 4,
+    marginRight: MAP_MARKER_LAYOUT.iconGap,
   },
   pillText: {
-    fontSize: 12,
+    fontSize: FONT_SIZE.caption,
     fontWeight: '600',
-    maxWidth: 100,
+    maxWidth: MAP_MARKER_LAYOUT.maxTitleWidth,
   },
 });

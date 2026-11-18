@@ -1,8 +1,22 @@
 import * as SQLite from 'expo-sqlite';
 import { DEFAULT_LIST_TYPE } from '../constants/listCategories';
 
+/**
+ * @typedef {{ latitude: number, longitude: number }} Coordinate
+ * @typedef {{
+ *   id: number,
+ *   latitude: number,
+ *   longitude: number,
+ *   title: string | null,
+ *   listType: string | null
+ * }} MarkerRow
+ * @typedef {{ id: number, name: string }} SavedListRow
+ * @typedef {{ list_id: string, emoji: string }} ListIconOverride
+ */
+
 const db = SQLite.openDatabaseSync('mapscribe.db');
 
+/** Initialize the SQLite schema and apply required migrations. */
 export function initDatabase() {
   try {
     db.execSync(`
@@ -35,6 +49,7 @@ export function initDatabase() {
   }
 }
 
+/** @returns {MarkerRow[]} */
 export function getMarkers() {
   try {
     return db.getAllSync('SELECT * FROM markers');
@@ -44,6 +59,12 @@ export function getMarkers() {
   }
 }
 
+/**
+ * @param {Coordinate} coordinate
+ * @param {string} title
+ * @param {string} [listType]
+ * @returns {number}
+ */
 export function addMarkerToDb(coordinate, title, listType = DEFAULT_LIST_TYPE) {
   try {
     const result = db.runSync(
@@ -57,6 +78,12 @@ export function addMarkerToDb(coordinate, title, listType = DEFAULT_LIST_TYPE) {
   }
 }
 
+/**
+ * @param {number} id
+ * @param {Coordinate} coordinate
+ * @param {string} title
+ * @param {string} listType
+ */
 export function updateMarkerInDb(id, coordinate, title, listType) {
   try {
     const result = db.runSync(
@@ -70,6 +97,7 @@ export function updateMarkerInDb(id, coordinate, title, listType) {
   }
 }
 
+/** @param {number} id */
 export function deleteMarkerFromDb(id) {
   try {
     const result = db.runSync('DELETE FROM markers WHERE id = ?;', [id]);
@@ -80,6 +108,7 @@ export function deleteMarkerFromDb(id) {
   }
 }
 
+/** @returns {SavedListRow[]} */
 export function getSavedLists() {
   try {
     return db.getAllSync('SELECT id, name FROM saved_lists ORDER BY id;');
@@ -89,6 +118,7 @@ export function getSavedLists() {
   }
 }
 
+/** @param {string} name @returns {number} */
 export function addSavedListToDb(name) {
   try {
     const result = db.runSync('INSERT INTO saved_lists (name) VALUES (?);', [name]);
@@ -99,6 +129,7 @@ export function addSavedListToDb(name) {
   }
 }
 
+/** @returns {ListIconOverride[]} */
 export function getListIconOverrides() {
   try {
     return db.getAllSync('SELECT list_id, emoji FROM list_icon_overrides;');
@@ -108,6 +139,10 @@ export function getListIconOverrides() {
   }
 }
 
+/**
+ * @param {string} listId
+ * @param {string | null} emoji
+ */
 export function setListIconOverride(listId, emoji) {
   try {
     if (emoji) {

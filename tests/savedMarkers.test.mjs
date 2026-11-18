@@ -64,6 +64,7 @@ test('loads saved markers and applies the default list to legacy rows', () => {
   const storage = createStorage({
     markers: [
       { id: 8, latitude: 51.5, longitude: -0.1, title: 'Museum', listType: null },
+      { id: 9, latitude: 51.6, longitude: -0.2, title: null, listType: 'favorites' },
     ],
   });
 
@@ -73,6 +74,12 @@ test('loads saved markers and applies the default list to legacy rows', () => {
       coordinate: { latitude: 51.5, longitude: -0.1 },
       title: 'Museum',
       listType: 'want_to_go',
+    },
+    {
+      id: 9,
+      coordinate: { latitude: 51.6, longitude: -0.2 },
+      title: '',
+      listType: 'favorites',
     },
   ]);
 });
@@ -109,6 +116,7 @@ test('rejects empty and duplicate custom list names', () => {
 
   assert.throws(() => createSavedList(storage, '  '), /name is required/);
   assert.throws(() => createSavedList(storage, 'coffee shops'), /already exists/);
+  assert.throws(() => createSavedList(createStorage(), 'favorites', ['Favorites']), /already exists/);
 });
 
 test('loads and persists emoji overrides for built-in or custom lists', () => {

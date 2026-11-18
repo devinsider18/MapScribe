@@ -10,11 +10,25 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import {
+  ACTION_LABELS,
+  DEFAULT_PLACE_TITLE,
+  DELETE_PLACE_FAILURE,
+  DELETE_PLACE_TITLE,
+  DUPLICATE_LIST_NAME,
+  LIST_NAME_REQUIRED,
+} from '../constants/messages.mjs';
+import { COLORS, ICON_SIZE, INPUT_LIMITS } from '../constants/theme';
 import ListCategoryIcon from './ListCategoryIcon';
 import ListEmojiPicker from './ListEmojiPicker';
 import SavePlaceModal from './SavePlaceModal';
 import styles from './SavedListsPanel.styles';
 
+/**
+ * @param {{
+ *   savedPlaces: ReturnType<typeof import('../hooks/useSavedMarkers').default>
+ * }} props
+ */
 export default function SavedListsPanel({ savedPlaces }) {
   const {
     markers,
@@ -57,12 +71,7 @@ export default function SavedListsPanel({ savedPlaces }) {
   const handleCreateList = () => {
     const name = newListName.trim();
     if (!name) {
-      setCreateListError('Enter a name for your list.');
-      return;
-    }
-
-    if (listCategories.some((category) => category.label.toLocaleLowerCase() === name.toLocaleLowerCase())) {
-      setCreateListError('A list with this name already exists.');
+      setCreateListError(LIST_NAME_REQUIRED);
       return;
     }
 
@@ -70,6 +79,11 @@ export default function SavedListsPanel({ savedPlaces }) {
     try {
       newList = createSavedList(name);
     } catch (error) {
+      if (error instanceof Error && error.message === DUPLICATE_LIST_NAME) {
+        setCreateListError(DUPLICATE_LIST_NAME);
+        return;
+      }
+
       console.error('Failed to create saved list:', error);
       setCreateListError('Could not create this list. Please try again.');
       return;
@@ -108,7 +122,7 @@ export default function SavedListsPanel({ savedPlaces }) {
       updateSavedMarker(
         editingPlace.id,
         editingPlace.coordinate,
-        editingPlace.title.trim() || 'Unlabeled Place',
+        editingPlace.title.trim() || DEFAULT_PLACE_TITLE,
         editingPlace.listType
       );
       closeEditor();
@@ -120,12 +134,12 @@ export default function SavedListsPanel({ savedPlaces }) {
 
   const requestDeletePlace = (place) => {
     Alert.alert(
-      'Delete place?',
+      DELETE_PLACE_TITLE,
       `Remove "${place.title}" from your saved places?`,
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: ACTION_LABELS.cancel, style: 'cancel' },
         {
-          text: 'Delete',
+          text: ACTION_LABELS.delete,
           style: 'destructive',
           onPress: () => {
             try {
@@ -134,7 +148,7 @@ export default function SavedListsPanel({ savedPlaces }) {
             } catch (error) {
               console.error('Failed to delete saved place:', error);
               if (editingPlace?.id === place.id) {
-                setEditError('Could not delete this place. Please try again.');
+                setEditError(DELETE_PLACE_FAILURE);
               } else {
                 Alert.alert('Could not delete place', 'Please try again.');
               }
@@ -161,7 +175,7 @@ export default function SavedListsPanel({ savedPlaces }) {
         }}
         style={styles.createListButton}
       >
-        <MaterialIcons name="add" size={20} color="#1D1B20" />
+        <MaterialIcons name="add" size={ICON_SIZE.action} color={COLORS.textPrimary} />
         <Text style={styles.createListButtonText}>New list</Text>
       </TouchableOpacity>
 
@@ -259,7 +273,7 @@ function SavedListCard({
           <MaterialIcons
             name={expanded ? 'expand-less' : 'expand-more'}
             size={24}
-            color="#49454F"
+            color={COLORS.textSecondary}
           />
         </TouchableOpacity>
         <TouchableOpacity
@@ -268,7 +282,7 @@ function SavedListCard({
           onPress={onChangeIcon}
           style={styles.cardChangeIconButton}
         >
-          <MaterialIcons name="edit" size={18} color="#49454F" />
+          <MaterialIcons name="edit" size={ICON_SIZE.small} color={COLORS.textSecondary} />
         </TouchableOpacity>
       </View>
 
@@ -285,7 +299,7 @@ function SavedListCard({
                   onPress={() => onEditPlace(place)}
                   style={styles.cardPlaceAction}
                 >
-                  <MaterialIcons name="edit" size={18} color="#49454F" />
+                  <MaterialIcons name="edit" size={ICON_SIZE.small} color={COLORS.textSecondary} />
                 </TouchableOpacity>
                 <TouchableOpacity
                   accessibilityRole="button"
@@ -293,7 +307,11 @@ function SavedListCard({
                   onPress={() => onDeletePlace(place)}
                   style={styles.cardPlaceAction}
                 >
-                  <MaterialIcons name="delete-outline" size={19} color="#B3261E" />
+                  <MaterialIcons
+                    name="delete-outline"
+                    size={ICON_SIZE.delete}
+                    color={COLORS.danger}
+                  />
                 </TouchableOpacity>
               </View>
             ))
@@ -359,9 +377,9 @@ function CreateListDialog({
           <Text style={styles.dialogSubtitle}>Give your saved places a new home.</Text>
           <TextInput
             autoFocus
-            maxLength={40}
+            maxLength={INPUT_LIMITS.listName}
             placeholder="List name"
-            placeholderTextColor="#74777F"
+            placeholderTextColor={COLORS.placeholder}
             value={name}
             onChangeText={onNameChange}
             onSubmitEditing={onCreate}
@@ -375,8 +393,8 @@ function CreateListDialog({
           <ListEmojiPicker selectedEmoji={emoji} onEmojiChange={onEmojiChange} />
           {errorMessage ? <Text style={styles.dialogError}>{errorMessage}</Text> : null}
           <DialogActions
-            cancelLabel="Cancel"
-            saveLabel="Create"
+            cancelLabel={ACTION_LABELS.cancel}
+            saveLabel={ACTION_LABELS.create}
             onClose={onClose}
             onSave={onCreate}
           />
@@ -419,8 +437,8 @@ function EditListIconDialog({
           />
           {errorMessage ? <Text style={styles.dialogError}>{errorMessage}</Text> : null}
           <DialogActions
-            cancelLabel="Cancel"
-            saveLabel="Save"
+            cancelLabel={ACTION_LABELS.cancel}
+            saveLabel={ACTION_LABELS.save}
             onClose={onClose}
             onSave={onSave}
           />

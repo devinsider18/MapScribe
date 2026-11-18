@@ -11,6 +11,7 @@ import {
   updateMarkerInDb,
 } from '../api/database';
 import { DEFAULT_LIST_TYPE, LIST_CATEGORIES } from '../constants/listCategories';
+import { SAVED_PLACES_LOAD_ERROR } from '../constants/messages.mjs';
 import {
   createInitialSavedMarkersState,
   createSavedList as insertSavedList,
@@ -22,6 +23,40 @@ import {
   saveMarkerToDatabase,
   updateSavedMarker,
 } from '../models/savedMarkers.mjs';
+
+/**
+ * @typedef {{ latitude: number, longitude: number }} Coordinate
+ * @typedef {{
+ *   id: number,
+ *   coordinate: Coordinate,
+ *   title: string,
+ *   listType: string
+ * }} SavedMarker
+ * @typedef {{
+ *   id: string,
+ *   label: string,
+ *   icon: string,
+ *   color: string,
+ *   bg: string,
+ *   emoji: string | null
+ * }} SavedListCategory
+ * @typedef {{
+ *   markers: SavedMarker[],
+ *   listCategories: SavedListCategory[],
+ *   loadError: string | null,
+ *   addSavedMarker: (coordinate: Coordinate, title: string, listType: string) => void,
+ *   createSavedList: (name: string) => SavedListCategory,
+ *   updateSavedListIcon: (listId: string, emoji: string | null) => void,
+ *   updateSavedMarker: (
+ *     id: number,
+ *     coordinate: Coordinate,
+ *     title: string,
+ *     listType: string
+ *   ) => void,
+ *   deleteSavedMarker: (id: number) => void,
+ *   reloadSavedMarkers: () => void
+ * }} SavedPlaces
+ */
 
 const markerStorage = {
   initialize: initDatabase,
@@ -35,6 +70,7 @@ const markerStorage = {
   delete: deleteMarkerFromDb,
 };
 
+/** @returns {SavedPlaces} */
 export default function useSavedMarkers() {
   const [savedMarkersState, setSavedMarkersState] = useState(() =>
     createInitialSavedMarkersState(markerStorage, DEFAULT_LIST_TYPE)
@@ -52,7 +88,7 @@ export default function useSavedMarkers() {
       console.error('Failed to reload saved places:', error);
       setSavedMarkersState((current) => ({
         ...current,
-        loadError: 'Saved places could not be loaded.',
+        loadError: SAVED_PLACES_LOAD_ERROR,
       }));
     }
   }, []);
@@ -87,7 +123,11 @@ export default function useSavedMarkers() {
   };
 
   const createSavedList = (name) => {
-    const list = insertSavedList(markerStorage, name);
+    const list = insertSavedList(
+      markerStorage,
+      name,
+      LIST_CATEGORIES.map((category) => category.label)
+    );
 
     setSavedMarkersState((current) => ({
       ...current,

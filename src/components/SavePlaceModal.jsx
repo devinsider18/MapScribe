@@ -1,8 +1,32 @@
 import { Modal, Pressable, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { LIST_CATEGORIES } from '../constants/listCategories';
+import { ACTION_LABELS } from '../constants/messages.mjs';
+import { COLORS, ICON_SIZE } from '../constants/theme';
 import ListCategoryIcon from './ListCategoryIcon';
 import styles from './SavePlaceModal.styles';
 
+/**
+ * @param {{
+ *   visible: boolean,
+ *   title: string,
+ *   selectedListType: string,
+ *   errorMessage: string,
+ *   isEditing: boolean,
+ *   onTitleChange: (title: string) => void,
+ *   onListTypeChange: (listType: string) => void,
+ *   onClose: () => void,
+ *   onSave: () => void,
+ *   onDelete: () => void,
+ *   listCategories?: Array<{
+ *     id: string,
+ *     label: string,
+ *     icon: string,
+ *     color: string,
+ *     bg: string,
+ *     emoji?: string | null
+ *   }>
+ * }} props
+ */
 export default function SavePlaceModal({
   visible,
   title,
@@ -38,7 +62,7 @@ export default function SavePlaceModal({
           <TextInput
             style={styles.input}
             placeholder="Place name (e.g., Best Coffee)"
-            placeholderTextColor="#74777F"
+            placeholderTextColor={COLORS.placeholder}
             value={title}
             onChangeText={onTitleChange}
             autoFocus
@@ -63,7 +87,7 @@ export default function SavePlaceModal({
                 >
                   <ListCategoryIcon
                     category={category}
-                    size={16}
+                    size={ICON_SIZE.chip}
                     color={category.color}
                     style={styles.categoryIcon}
                   />
@@ -82,7 +106,7 @@ export default function SavePlaceModal({
                 accessibilityRole="button"
                 onPress={onDelete}
               >
-                <Text style={styles.deleteButtonText}>Delete</Text>
+                <Text style={styles.deleteButtonText}>{ACTION_LABELS.delete}</Text>
               </TouchableOpacity>
             ) : null}
             <TouchableOpacity
@@ -90,7 +114,7 @@ export default function SavePlaceModal({
               accessibilityRole="button"
               onPress={onClose}
             >
-              <Text style={styles.cancelButtonText}>Cancel</Text>
+              <Text style={styles.cancelButtonText}>{ACTION_LABELS.cancel}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -98,7 +122,9 @@ export default function SavePlaceModal({
               accessibilityRole="button"
               onPress={onSave}
             >
-              <Text style={styles.saveButtonText}>{isEditing ? 'Save changes' : 'Save'}</Text>
+              <Text style={styles.saveButtonText}>
+                {isEditing ? 'Save changes' : ACTION_LABELS.save}
+              </Text>
             </TouchableOpacity>
           </View>
           {errorMessage ? <Text style={styles.errorMessage}>{errorMessage}</Text> : null}
