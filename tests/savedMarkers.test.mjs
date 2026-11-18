@@ -2,13 +2,23 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
   createInitialSavedMarkersState,
+  createSavedList,
   deleteSavedMarker,
+  loadListIconOverrides,
   loadSavedMarkers,
+  saveListIcon,
   saveMarkerToDatabase,
   updateSavedMarker,
 } from '../src/models/savedMarkers.mjs';
 
-function createStorage({ markers = [], insertId = 1, error = null } = {}) {
+function createStorage({
+  markers = [],
+  lists = [],
+  listIconOverrides = [],
+  insertId = 1,
+  listInsertId = 1,
+  error = null,
+} = {}) {
   return {
     initialize() {
       if (error) throw error;
@@ -17,10 +27,27 @@ function createStorage({ markers = [], insertId = 1, error = null } = {}) {
       if (error) throw error;
       return markers;
     },
+    getLists() {
+      if (error) throw error;
+      return lists;
+    },
+    getListIconOverrides() {
+      if (error) throw error;
+      return listIconOverrides;
+    },
     insert(coordinate, title, listType) {
       if (error) throw error;
       this.inserted = { coordinate, title, listType };
       return insertId;
+    },
+    insertList(name) {
+      if (error) throw error;
+      this.insertedListName = name;
+      return listInsertId;
+    },
+    setListIcon(listId, emoji) {
+      if (error) throw error;
+      this.savedIcon = { listId, emoji };
     },
     update(id, coordinate, title, listType) {
       if (error) throw error;
@@ -58,8 +85,40 @@ test('returns a visible load error when storage initialization fails', () => {
 
   assert.deepEqual(state, {
     markers: [],
+    customLists: [],
+    listIconOverrides: {},
     loadError: 'Saved places could not be loaded.',
   });
+});
+
+test('creates a custom list and returns its category for the app UI', () => {
+  const storage = createStorage({ listInsertId: 7 });
+
+  assert.deepEqual(createSavedList(storage, '  Coffee shops  '), {
+    id: 'custom_7',
+    label: 'Coffee shops',
+    icon: 'folder',
+    color: '#984061',
+    bg: '#FFD8E6',
+  });
+  assert.equal(storage.insertedListName, 'Coffee shops');
+});
+
+test('rejects empty and duplicate custom list names', () => {
+  const storage = createStorage({ lists: [{ id: 2, name: 'Coffee shops' }] });
+
+  assert.throws(() => createSavedList(storage, '  '), /name is required/);
+  assert.throws(() => createSavedList(storage, 'coffee shops'), /already exists/);
+});
+
+test('loads and persists emoji overrides for built-in or custom lists', () => {
+  const storage = createStorage({
+    listIconOverrides: [{ list_id: 'favorites', emoji: '🌟' }],
+  });
+
+  assert.deepEqual(loadListIconOverrides(storage), { favorites: '🌟' });
+  saveListIcon(storage, 'custom_4', '☕');
+  assert.deepEqual(storage.savedIcon, { listId: 'custom_4', emoji: '☕' });
 });
 
 test('persists a marker before returning its map representation', () => {

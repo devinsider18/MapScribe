@@ -1,11 +1,11 @@
-import { MaterialIcons } from '@expo/vector-icons';
 import { StyleSheet, Text, View } from 'react-native';
 import { Marker } from 'react-native-maps';
 import { LIST_CATEGORIES } from '../constants/listCategories';
+import ListCategoryIcon from './ListCategoryIcon';
 
-export default function MapMarkers({ markers, onMarkerPress }) {
+export default function MapMarkers({ markers, onMarkerPress, listCategories = LIST_CATEGORIES }) {
   return markers.map((marker) => {
-    const styleConfig = LIST_CATEGORIES.find((category) => category.id === marker.listType) || LIST_CATEGORIES[0];
+    const styleConfig = listCategories.find((category) => category.id === marker.listType) || listCategories[0];
 
     return (
       <Marker
@@ -15,7 +15,12 @@ export default function MapMarkers({ markers, onMarkerPress }) {
         onPress={() => onMarkerPress(marker)}
       >
         <View style={[styles.pillContainer, { backgroundColor: styleConfig.bg }]}>
-          <MaterialIcons name={styleConfig.icon} size={14} color={styleConfig.color} style={styles.pillIcon} />
+          <ListCategoryIcon
+            category={styleConfig}
+            size={14}
+            color={styleConfig.color}
+            style={styles.pillIcon}
+          />
           <Text style={[styles.pillText, { color: styleConfig.color }]} numberOfLines={1}>
             {marker.title}
           </Text>

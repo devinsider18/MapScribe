@@ -4,6 +4,7 @@ import { StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } from 'r
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import MapViewComponent from '@/components/MapViewComponent';
 import SavedListsPanel from '../src/components/SavedListsPanel';
+import useSavedMarkers from '../src/hooks/useSavedMarkers';
 
 type TabName = 'explore' | 'lists';
 type MaterialIconName = ComponentProps<typeof MaterialIcons>['name'];
@@ -11,6 +12,7 @@ type MaterialIconName = ComponentProps<typeof MaterialIcons>['name'];
 export default function Page() {
   const insets = useSafeAreaInsets();
   const { height: screenHeight } = useWindowDimensions();
+  const savedPlaces = useSavedMarkers();
   const [activeTab, setActiveTab] = useState<TabName>('explore');
   const [bottomBarHeight, setBottomBarHeight] = useState(72 + insets.bottom);
   const listsVisible = activeTab === 'lists';
@@ -25,10 +27,10 @@ export default function Page() {
 
   return (
     <View style={styles.container}>
-      <MapViewComponent />
+      <MapViewComponent savedPlaces={savedPlaces} />
       {listsVisible ? (
         <View style={[styles.panelContainer, { top: panelTop, bottom: bottomBarHeight }]}>
-          <SavedListsPanel />
+          <SavedListsPanel savedPlaces={savedPlaces} />
         </View>
       ) : null}
       <View

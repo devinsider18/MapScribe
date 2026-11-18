@@ -1,16 +1,24 @@
 import { useCallback, useState } from 'react';
 import {
   addMarkerToDb,
+  addSavedListToDb,
   deleteMarkerFromDb,
   getMarkers,
+  getSavedLists,
+  getListIconOverrides,
   initDatabase,
+  setListIconOverride,
   updateMarkerInDb,
 } from '../api/database';
-import { DEFAULT_LIST_TYPE } from '../constants/listCategories';
+import { DEFAULT_LIST_TYPE, LIST_CATEGORIES } from '../constants/listCategories';
 import {
   createInitialSavedMarkersState,
+  createSavedList as insertSavedList,
   deleteSavedMarker,
+  loadCustomLists,
+  loadListIconOverrides,
   loadSavedMarkers,
+  saveListIcon,
   saveMarkerToDatabase,
   updateSavedMarker,
 } from '../models/savedMarkers.mjs';
@@ -18,7 +26,11 @@ import {
 const markerStorage = {
   initialize: initDatabase,
   getAll: getMarkers,
+  getLists: getSavedLists,
+  getListIconOverrides,
   insert: addMarkerToDb,
+  insertList: addSavedListToDb,
+  setListIcon: setListIconOverride,
   update: updateMarkerInDb,
   delete: deleteMarkerFromDb,
 };
@@ -32,6 +44,8 @@ export default function useSavedMarkers() {
     try {
       setSavedMarkersState({
         markers: loadSavedMarkers(markerStorage, DEFAULT_LIST_TYPE),
+        customLists: loadCustomLists(markerStorage),
+        listIconOverrides: loadListIconOverrides(markerStorage),
         loadError: null,
       });
     } catch (error) {
@@ -72,10 +86,44 @@ export default function useSavedMarkers() {
     }));
   };
 
+  const createSavedList = (name) => {
+    const list = insertSavedList(markerStorage, name);
+
+    setSavedMarkersState((current) => ({
+      ...current,
+      customLists: [...current.customLists, list],
+    }));
+
+    return list;
+  };
+
+  const updateSavedListIcon = (listId, emoji) => {
+    saveListIcon(markerStorage, listId, emoji);
+
+    setSavedMarkersState((current) => {
+      const listIconOverrides = { ...current.listIconOverrides };
+      if (emoji) {
+        listIconOverrides[listId] = emoji;
+      } else {
+        delete listIconOverrides[listId];
+      }
+
+      return { ...current, listIconOverrides };
+    });
+  };
+
+  const listCategories = [...LIST_CATEGORIES, ...savedMarkersState.customLists].map((category) => ({
+    ...category,
+    emoji: savedMarkersState.listIconOverrides[category.id] || null,
+  }));
+
   return {
     markers: savedMarkersState.markers,
+    listCategories,
     loadError: savedMarkersState.loadError,
     addSavedMarker,
+    createSavedList,
+    updateSavedListIcon,
     updateSavedMarker: updateExistingMarker,
     deleteSavedMarker: removeSavedMarker,
     reloadSavedMarkers,

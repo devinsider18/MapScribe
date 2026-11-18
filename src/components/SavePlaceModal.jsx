@@ -1,6 +1,6 @@
-import { MaterialIcons } from '@expo/vector-icons';
 import { Modal, Pressable, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { LIST_CATEGORIES } from '../constants/listCategories';
+import ListCategoryIcon from './ListCategoryIcon';
 import styles from './SavePlaceModal.styles';
 
 export default function SavePlaceModal({
@@ -14,6 +14,7 @@ export default function SavePlaceModal({
   onClose,
   onSave,
   onDelete,
+  listCategories = LIST_CATEGORIES,
 }) {
   return (
     <Modal
@@ -44,7 +45,7 @@ export default function SavePlaceModal({
           <Text style={styles.sectionLabel}>Select List</Text>
 
           <ScrollView style={styles.categoriesScroll} contentContainerStyle={styles.categoriesContainer}>
-            {LIST_CATEGORIES.map((category) => {
+            {listCategories.map((category) => {
               const isSelected = selectedListType === category.id;
               return (
                 <TouchableOpacity
@@ -58,7 +59,12 @@ export default function SavePlaceModal({
                   accessibilityState={{ selected: isSelected }}
                   onPress={() => onListTypeChange(category.id)}
                 >
-                  <MaterialIcons name={category.icon} size={16} color={category.color} style={styles.categoryIcon} />
+                  <ListCategoryIcon
+                    category={category}
+                    size={16}
+                    color={category.color}
+                    style={styles.categoryIcon}
+                  />
                   <Text style={[styles.categoryChipText, { color: category.color }]}>
                     {category.label}
                   </Text>

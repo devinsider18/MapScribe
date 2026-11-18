@@ -13,6 +13,16 @@ export function initDatabase() {
         title TEXT,
         listType TEXT DEFAULT '${DEFAULT_LIST_TYPE}'
       );
+
+      CREATE TABLE IF NOT EXISTS saved_lists (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL COLLATE NOCASE UNIQUE
+      );
+
+      CREATE TABLE IF NOT EXISTS list_icon_overrides (
+        list_id TEXT PRIMARY KEY NOT NULL,
+        emoji TEXT NOT NULL
+      );
     `);
 
     const columns = db.getAllSync('PRAGMA table_info(markers)');
@@ -66,6 +76,50 @@ export function deleteMarkerFromDb(id) {
     if (result.changes === 0) throw new Error(`Saved place ${id} was not found.`);
   } catch (error) {
     console.error('Failed to delete marker from database:', error);
+    throw error;
+  }
+}
+
+export function getSavedLists() {
+  try {
+    return db.getAllSync('SELECT id, name FROM saved_lists ORDER BY id;');
+  } catch (error) {
+    console.error('Failed to fetch saved lists from database:', error);
+    throw error;
+  }
+}
+
+export function addSavedListToDb(name) {
+  try {
+    const result = db.runSync('INSERT INTO saved_lists (name) VALUES (?);', [name]);
+    return result.lastInsertRowId;
+  } catch (error) {
+    console.error('Failed to insert saved list into database:', error);
+    throw error;
+  }
+}
+
+export function getListIconOverrides() {
+  try {
+    return db.getAllSync('SELECT list_id, emoji FROM list_icon_overrides;');
+  } catch (error) {
+    console.error('Failed to fetch saved list icons from database:', error);
+    throw error;
+  }
+}
+
+export function setListIconOverride(listId, emoji) {
+  try {
+    if (emoji) {
+      db.runSync(
+        'INSERT INTO list_icon_overrides (list_id, emoji) VALUES (?, ?) ON CONFLICT(list_id) DO UPDATE SET emoji = excluded.emoji;',
+        [listId, emoji]
+      );
+    } else {
+      db.runSync('DELETE FROM list_icon_overrides WHERE list_id = ?;', [listId]);
+    }
+  } catch (error) {
+    console.error('Failed to update saved list icon in database:', error);
     throw error;
   }
 }

@@ -3,7 +3,6 @@ import { useEffect, useState } from 'react';
 import { Alert, StyleSheet, Text, View } from 'react-native';
 import MapView, { PROVIDER_GOOGLE } from 'react-native-maps';
 import { DEFAULT_LIST_TYPE } from '../constants/listCategories';
-import useSavedMarkers from '../hooks/useSavedMarkers';
 import MapMarkers from './MapMarkers';
 import SavePlaceModal from './SavePlaceModal';
 
@@ -35,15 +34,16 @@ async function getInitialRegion() {
   };
 }
 
-export default function MapViewComponent() {
+export default function MapViewComponent({ savedPlaces }) {
   const [region, setRegion] = useState(null);
   const {
     markers,
+    listCategories,
     loadError,
     addSavedMarker,
     updateSavedMarker,
     deleteSavedMarker,
-  } = useSavedMarkers();
+  } = savedPlaces;
   const [modalState, setModalState] = useState(EMPTY_MODAL_STATE);
   const [saveError, setSaveError] = useState('');
   const [locationNotice, setLocationNotice] = useState('');
@@ -173,7 +173,11 @@ export default function MapViewComponent() {
         customMapStyle={CLEAN_MAP_STYLE}
         onLongPress={handleLongPress}
       >
-        <MapMarkers markers={markers} onMarkerPress={handleMarkerPress} />
+        <MapMarkers
+          markers={markers}
+          listCategories={listCategories}
+          onMarkerPress={handleMarkerPress}
+        />
       </MapView>
       {locationNotice ? <Text style={styles.locationNotice}>{locationNotice}</Text> : null}
       {loadError ? <Text style={styles.loadError}>{loadError}</Text> : null}
@@ -182,6 +186,7 @@ export default function MapViewComponent() {
         title={modalState.title}
         selectedListType={modalState.listType}
         errorMessage={saveError}
+        listCategories={listCategories}
         isEditing={modalState.markerId !== null}
         onTitleChange={handleTitleChange}
         onListTypeChange={handleListTypeChange}
