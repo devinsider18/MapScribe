@@ -1,6 +1,5 @@
 import { StyleSheet } from 'react-native';
 import {
-  CATEGORY_SELECTOR_MAX_HEIGHT,
   COLORS,
   FONT_SIZE,
   MODAL_WIDTH,
@@ -15,15 +14,19 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.modalScrim,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: SPACING.xl,
+    padding: SPACING.md,
+  },
+  modalBackdrop: {
+    ...StyleSheet.absoluteFillObject,
   },
   modalContent: {
     width: '100%',
     maxWidth: MODAL_WIDTH.place,
-    maxHeight: '80%',
+    maxHeight: '90%',
+    flexShrink: 1,
     backgroundColor: COLORS.dialogSurface,
     borderRadius: RADII.xl,
-    padding: SPACING.xxl,
+    padding: SPACING.lg,
     shadowColor: COLORS.black,
     shadowOffset: { width: 0, height: SHADOWS.modal.offsetY },
     shadowOpacity: SHADOWS.modal.opacity,
@@ -40,6 +43,14 @@ const styles = StyleSheet.create({
     fontSize: FONT_SIZE.body,
     color: COLORS.textSubtle,
     marginBottom: SPACING.lg,
+  },
+  modalBody: {
+    flexGrow: 1,
+    flexShrink: 1,
+    minHeight: 0,
+  },
+  modalBodyContent: {
+    paddingBottom: SPACING.sm,
   },
   errorMessage: {
     color: COLORS.danger,
@@ -63,15 +74,11 @@ const styles = StyleSheet.create({
     color: COLORS.textSubtle,
     marginBottom: SPACING.sm,
   },
-  categoriesScroll: {
-    maxHeight: CATEGORY_SELECTOR_MAX_HEIGHT,
-    marginBottom: SPACING.xl,
-  },
   categoriesContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: SPACING.sm,
-    paddingBottom: SPACING.xs,
+    paddingBottom: SPACING.lg,
   },
   categoryChip: {
     flexDirection: 'row',
@@ -93,19 +100,46 @@ const styles = StyleSheet.create({
     fontSize: FONT_SIZE.small,
     fontWeight: '600',
   },
+  progressSection: {
+    marginBottom: SPACING.md,
+  },
+  progressOptions: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: SPACING.xs,
+  },
+  progressOption: {
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: SPACING.xs,
+    borderRadius: RADII.pill,
+    backgroundColor: COLORS.raisedSurface,
+  },
+  progressOptionSelected: {
+    backgroundColor: COLORS.primaryContainer,
+  },
+  progressOptionText: {
+    color: COLORS.textSecondary,
+    fontSize: FONT_SIZE.small,
+  },
+  progressOptionTextSelected: {
+    color: COLORS.primary,
+    fontWeight: '600',
+  },
   modalButtons: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     alignItems: 'center',
-    gap: SPACING.md,
+    justifyContent: 'flex-end',
+    gap: SPACING.xs,
+    paddingTop: SPACING.sm,
   },
   button: {
     paddingVertical: SPACING.compact,
-    paddingHorizontal: SPACING.xl,
+    paddingHorizontal: SPACING.md,
     borderRadius: RADII.pill,
   },
   cancelButton: {
     backgroundColor: 'transparent',
-    marginLeft: 'auto',
   },
   deleteButton: {
     backgroundColor: COLORS.dangerContainer,

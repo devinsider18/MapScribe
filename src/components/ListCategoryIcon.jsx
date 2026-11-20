@@ -1,5 +1,6 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import { Text } from 'react-native';
+import { getMaterialIconName } from '../constants/listIcons.mjs';
 import { ICON_SIZE } from '../constants/theme';
 
 /**
@@ -11,6 +12,19 @@ import { ICON_SIZE } from '../constants/theme';
  * }} props
  */
 export default function ListCategoryIcon({ category, size = ICON_SIZE.medium, color, style }) {
+  const materialIcon = getMaterialIconName(category.emoji);
+
+  if (materialIcon) {
+    return (
+      <MaterialIcons
+        name={materialIcon}
+        size={size}
+        color={color || category.color}
+        style={style}
+      />
+    );
+  }
+
   if (category.emoji) {
     return <Text style={[{ fontSize: size }, style]}>{category.emoji}</Text>;
   }

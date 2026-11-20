@@ -21,6 +21,26 @@ export default ({ config }) => ({
         'expo-sqlite',
         'expo-web-browser',
         [
+            'expo-status-bar',
+            {
+                style: 'dark',
+            },
+        ],
+        [
+            'expo-navigation-bar',
+            {
+                style: 'dark',
+                enforceContrast: false,
+            },
+        ],
+        [
+            'expo-image-picker',
+            {
+                photosPermission: 'MapScribe uses access to let you add photos to saved places.',
+                cameraPermission: 'MapScribe uses the camera to add photos to saved places.',
+            },
+        ],
+        [
             'react-native-maps',
             {
                 androidGoogleMapsApiKey: process.env.GOOGLE_MAPS_API_KEY

@@ -2,6 +2,7 @@ import * as Location from 'expo-location';
 import { useEffect, useState } from 'react';
 import { Alert, StyleSheet, Text, View } from 'react-native';
 import MapView, { PROVIDER_GOOGLE } from 'react-native-maps';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { DEFAULT_LIST_TYPE } from '../constants/listCategories';
 import {
   CLEAN_MAP_STYLE,
@@ -18,6 +19,7 @@ import {
 } from '../constants/messages.mjs';
 import { COLORS, RADII, SPACING } from '../constants/theme';
 import MapMarkers from './MapMarkers';
+import PlaceDetailsModal from './PlaceDetailsModal';
 import SavePlaceModal from './SavePlaceModal';
 
 const EMPTY_MODAL_STATE = {
@@ -48,6 +50,7 @@ async function getInitialRegion() {
  * }} props
  */
 export default function MapViewComponent({ savedPlaces }) {
+  const insets = useSafeAreaInsets();
   const [region, setRegion] = useState(null);
   const {
     markers,
@@ -58,6 +61,7 @@ export default function MapViewComponent({ savedPlaces }) {
     deleteSavedMarker,
   } = savedPlaces;
   const [modalState, setModalState] = useState(EMPTY_MODAL_STATE);
+  const [selectedPlaceId, setSelectedPlaceId] = useState(null);
   const [saveError, setSaveError] = useState('');
   const [locationNotice, setLocationNotice] = useState('');
 
@@ -99,18 +103,38 @@ export default function MapViewComponent({ savedPlaces }) {
       title: '',
       listType: DEFAULT_LIST_TYPE,
       markerId: null,
+      photos: [],
+      progress: 'unvisited',
     });
   };
 
   const handleMarkerPress = (marker) => {
     setSaveError('');
+    setSelectedPlaceId(marker.id);
+  };
+
+  const selectedPlace = markers.find((marker) => marker.id === selectedPlaceId) ?? null;
+  const selectedCategory = listCategories.find(
+    (category) => category.id === selectedPlace?.listType
+  ) ?? listCategories[0];
+
+  const handleEditSelectedPlace = () => {
+    if (!selectedPlace) return;
+
     setModalState({
       visible: true,
-      coords: marker.coordinate,
-      title: marker.title,
-      listType: marker.listType,
-      markerId: marker.id,
+      coords: selectedPlace.coordinate,
+      title: selectedPlace.title,
+      listType: selectedPlace.listType,
+      markerId: selectedPlace.id,
+      photos: selectedPlace.photos ?? [],
+      progress: selectedPlace.progress ?? 'unvisited',
     });
+    setSelectedPlaceId(null);
+  };
+
+  const handleClosePlaceDetails = () => {
+    setSelectedPlaceId(null);
   };
 
   const handleCloseModal = () => {
@@ -120,6 +144,32 @@ export default function MapViewComponent({ savedPlaces }) {
 
   const handleTitleChange = (title) => {
     setModalState((current) => ({ ...current, title }));
+  };
+
+  const handlePhotosChange = async (photos) => {
+    if (modalState.markerId === null) return;
+
+    try {
+      await savedPlaces.updateSavedMarkerPhotos(modalState.markerId, photos);
+    } catch (error) {
+      if (error.photosUpdated) {
+        setModalState((current) => ({ ...current, photos }));
+      }
+      throw error;
+    }
+    setModalState((current) => ({ ...current, photos }));
+  };
+
+  const handleProgressChange = (progress) => {
+    if (modalState.markerId === null) return;
+
+    try {
+      savedPlaces.updateSavedMarkerProgress(modalState.markerId, progress);
+      setModalState((current) => ({ ...current, progress }));
+    } catch (error) {
+      console.error('Failed to update place progress:', error);
+      setSaveError('Could not update this place. Please try again.');
+    }
   };
 
   const handleListTypeChange = (listType) => {
@@ -137,7 +187,14 @@ export default function MapViewComponent({ savedPlaces }) {
       if (modalState.markerId === null) {
         addSavedMarker(modalState.coords, title, modalState.listType);
       } else {
-        updateSavedMarker(modalState.markerId, modalState.coords, title, modalState.listType);
+        updateSavedMarker(
+          modalState.markerId,
+          modalState.coords,
+          title,
+          modalState.listType,
+          modalState.photos,
+          modalState.progress
+        );
       }
       handleCloseModal();
     } catch (error) {
@@ -157,13 +214,21 @@ export default function MapViewComponent({ savedPlaces }) {
         {
           text: ACTION_LABELS.delete,
           style: 'destructive',
-          onPress: () => {
+          onPress: async () => {
             try {
-              deleteSavedMarker(modalState.markerId);
+              await deleteSavedMarker(modalState.markerId);
               handleCloseModal();
             } catch (error) {
               console.error('Failed to delete place:', error);
-              setSaveError(DELETE_PLACE_FAILURE);
+              if (error.placeDeleted) {
+                handleCloseModal();
+                Alert.alert(
+                  'Place deleted',
+                  'Some attached photo files could not be removed.'
+                );
+              } else {
+                setSaveError(DELETE_PLACE_FAILURE);
+              }
             }
           },
         },
@@ -192,14 +257,37 @@ export default function MapViewComponent({ savedPlaces }) {
           onMarkerPress={handleMarkerPress}
         />
       </MapView>
-      {locationNotice ? <Text style={styles.locationNotice}>{locationNotice}</Text> : null}
-      {loadError ? <Text style={styles.loadError}>{loadError}</Text> : null}
+      <View
+        pointerEvents="none"
+        style={[styles.statusBarSurface, { height: insets.top }]}
+      />
+      {locationNotice ? (
+        <Text style={[styles.locationNotice, { top: insets.top + LOCATION_NOTICE_INSET }]}>
+          {locationNotice}
+        </Text>
+      ) : null}
+      {loadError ? (
+        <Text style={[styles.loadError, { top: insets.top + LOCATION_NOTICE_INSET }]}>
+          {loadError}
+        </Text>
+      ) : null}
+      <PlaceDetailsModal
+        place={selectedPlace}
+        category={selectedCategory}
+        onClose={handleClosePlaceDetails}
+        onEdit={handleEditSelectedPlace}
+      />
       <SavePlaceModal
         visible={modalState.visible}
         title={modalState.title}
         selectedListType={modalState.listType}
         errorMessage={saveError}
         listCategories={listCategories}
+        placeId={modalState.markerId}
+        photos={modalState.photos}
+        progress={modalState.progress}
+        onPhotosChange={handlePhotosChange}
+        onProgressChange={handleProgressChange}
         isEditing={modalState.markerId !== null}
         onTitleChange={handleTitleChange}
         onListTypeChange={handleListTypeChange}
@@ -214,9 +302,15 @@ export default function MapViewComponent({ savedPlaces }) {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   map: { flex: 1 },
+  statusBarSurface: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: COLORS.appBarSurface,
+  },
   locationNotice: {
     position: 'absolute',
-    top: LOCATION_NOTICE_INSET,
     left: LOCATION_NOTICE_INSET,
     right: LOCATION_NOTICE_INSET,
     padding: SPACING.md,

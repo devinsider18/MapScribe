@@ -1,4 +1,6 @@
 import { MaterialIcons } from '@expo/vector-icons';
+import { NavigationBar } from 'expo-navigation-bar';
+import { StatusBar } from 'expo-status-bar';
 import { useState, type ComponentProps } from 'react';
 import { StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -38,6 +40,8 @@ export default function Page() {
 
   return (
     <View style={styles.container}>
+      <StatusBar style="dark" />
+      <NavigationBar style="light" />
       <MapViewComponent savedPlaces={savedPlaces} />
       {listsVisible ? (
         <View style={[styles.panelContainer, { top: panelTop, bottom: bottomBarHeight }]}>

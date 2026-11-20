@@ -126,16 +126,38 @@ export default StyleSheet.create({
     paddingHorizontal: SPACING.wide,
     paddingVertical: SPACING.tight,
   },
+  placeEntry: {
+    paddingTop: SPACING.xs,
+  },
   cardPlaceRow: {
     minHeight: LIST_PANEL_LAYOUT.placeRowHeight,
     flexDirection: 'row',
+    flexWrap: 'wrap',
     alignItems: 'center',
-    gap: SPACING.md,
+    gap: SPACING.sm,
   },
   cardPlaceName: {
     flex: 1,
+    minWidth: 0,
     color: COLORS.textPrimary,
     fontSize: FONT_SIZE.body,
+  },
+  progressButton: {
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: SPACING.xs,
+    borderRadius: RADII.pill,
+    backgroundColor: COLORS.raisedSurface,
+  },
+  progressPlanned: {
+    backgroundColor: COLORS.primaryContainer,
+  },
+  progressVisited: {
+    backgroundColor: COLORS.listLabeledSurface,
+  },
+  progressButtonText: {
+    color: COLORS.textSecondary,
+    fontSize: FONT_SIZE.caption,
+    fontWeight: '600',
   },
   cardPlaceAction: {
     width: LIST_PANEL_LAYOUT.placeActionSize,
@@ -155,15 +177,28 @@ export default StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: SPACING.xl,
+    padding: SPACING.md,
     backgroundColor: COLORS.panelScrim,
+  },
+  dialogBackdrop: {
+    ...StyleSheet.absoluteFillObject,
   },
   dialogContent: {
     width: '100%',
     maxWidth: MODAL_WIDTH.list,
+    maxHeight: '90%',
+    flexShrink: 1,
     padding: SPACING.xxl,
     borderRadius: RADII.xl,
     backgroundColor: COLORS.dialogSurface,
+  },
+  dialogBody: {
+    flexGrow: 1,
+    flexShrink: 1,
+    minHeight: 0,
+  },
+  dialogBodyContent: {
+    paddingBottom: SPACING.xs,
   },
   dialogTitle: {
     color: COLORS.textPrimary,
@@ -205,15 +240,16 @@ export default StyleSheet.create({
   },
   dialogActions: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     justifyContent: 'flex-end',
     alignItems: 'center',
-    gap: SPACING.md,
-    marginTop: SPACING.xl,
+    gap: SPACING.xs,
+    marginTop: SPACING.md,
   },
   dialogCancelButton: {
     minHeight: CONTROL_SIZE.actionButton,
     justifyContent: 'center',
-    paddingHorizontal: SPACING.lg,
+    paddingHorizontal: SPACING.md,
     borderRadius: RADII.actionButton,
   },
   dialogCancelText: {
@@ -224,7 +260,7 @@ export default StyleSheet.create({
   dialogSaveButton: {
     minHeight: CONTROL_SIZE.actionButton,
     justifyContent: 'center',
-    paddingHorizontal: SPACING.xl,
+    paddingHorizontal: SPACING.md,
     borderRadius: RADII.actionButton,
     backgroundColor: COLORS.primary,
   },
