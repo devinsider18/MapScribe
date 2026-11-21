@@ -1,21 +1,21 @@
 # MapScribe
 
-Сделал это приложение на Expo и React Native, чтобы удобно сохранять места на карте, собирать их в списки и разбираться с поездками, не теряя заметок и дат.
+I built this app with Expo and React Native to save spots on a map, group them into lists, and organize trips without losing notes or dates.
 
-## Что внутри
+## What's inside
 
-На карте можно смотреть маркеры и сами места через `MapViewComponent` и `MapMarkers`. Когда хочется добавить точку или поправить детали, открываются `SavePlaceModal` и `PlaceDetailsModal`, к месту можно прикрутить фото в `PlacePhotoGallery` и выбрать дату в `DatePickerField`.
+You can view markers and saved places on the map through `MapViewComponent` and `MapMarkers`. When you want to add a spot or edit its details, `SavePlaceModal` and `PlaceDetailsModal` handle that, while `PlacePhotoGallery` attaches photos and `DatePickerField` lets you pick dates.
 
-Отдельно собираются списки и поездки. В `SavedListsPanel` удобно крутить списки, менять категории, цвета, иконки и эмодзи, а для поездок есть `TripsSection`. Под капотом всё завязано на локальную базу в `src/api/database.js`, подгрузку фото через `src/api/placePhotos.js`, модели в `src/models/savedMarkers.mjs` и хук `useSavedMarkers.js`. Кое-что уже покрыто тестами в `tests/`.
+Lists and trips live separately. `SavedListsPanel` handles browsing lists and tweaking categories, colors, icons, and emojis, while `TripsSection` keeps trips organized. Under the hood, everything runs on a local database in `src/api/database.js`, photo fetching in `src/api/placePhotos.js`, data models in `src/models/savedMarkers.mjs`, and the `useSavedMarkers.js` hook. Core logic is covered by tests in `tests/`.
 
-## Структура проекта
+## Project structure
 
-- `app/index.tsx` — главный экран и точка входа
-- `src/api/` — работа с локальной базой `database.js` и фото мест `placePhotos.js`
-- `src/components/` — карта, списки, поездки, модалки и пикеры
-- `src/constants/` — темы, цвета, иконки, категории, даты, прогресс, сообщения и настройки карты
-- `src/hooks/` — хук `useSavedMarkers.js`
-- `src/models/` — модели данных и логика `savedMarkers.mjs`
-- `src/types/domain.ts` — типы сущностей
-- `tests/` — тесты для иконок списков, дат и сохранённых маркеров
-- `android/` — нативная часть под Android
+- `app/index.tsx` - main screen and entry point
+- `src/api/` - local database `database.js` and place photos `placePhotos.js`
+- `src/components/` - map, lists, trips, modals, and pickers
+- `src/constants/` - themes, colors, icons, categories, dates, progress, messages, and map config
+- `src/hooks/` - `useSavedMarkers.js` hook
+- `src/models/` - data models and logic `savedMarkers.mjs`
+- `src/types/domain.ts` - entity type definitions
+- `tests/` - tests for list icons, dates, and saved markers
+- `android/` - native Android project files
