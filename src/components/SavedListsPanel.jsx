@@ -692,7 +692,7 @@ function SavedListCard({
  *   notes: string,
  *   visitedAt: string,
  *   onPhotosChange: (photos: string[]) => Promise<void>,
- *   onProgressChange: (progress: string) => void,
+ *   onProgressChange: (progress: import('../types/domain').PlaceProgress) => void,
  *   onNotesChange: (notes: string) => void,
  *   onVisitedAtChange: (visitedAt: string) => void,
  *   onTitleChange: (title: string) => void,

@@ -6,90 +6,15 @@ import { PLACE_PROGRESS } from '../constants/placeProgress.mjs';
 import { MAX_PLACE_PHOTOS } from '../constants/placePhotos.mjs';
 import { isValidPlaceDate } from '../constants/placeDates.mjs';
 
-/**
- * @typedef {{ latitude: number, longitude: number }} Coordinate
- * @typedef {{
- *   id: number,
- *   latitude: number,
- *   longitude: number,
- *   title: string | null,
- *   listType?: string | null,
- *   photos?: string | null,
- *   progress?: string | null,
- *   notes?: string | null,
- *   visitedAt?: string | null
- * }} MarkerRow
- * @typedef {{ id: number, name: string }} SavedListRow
- * @typedef {{
- *   id: number,
- *   coordinate: Coordinate,
- *   title: string,
- *   listType: string,
- *   photos: string[],
- *   progress: string,
- *   notes: string,
- *   visitedAt: string | null
- * }} SavedMarker
- * @typedef {{
- *   id: number,
- *   name: string,
- *   startDate: string,
- *   endDate: string,
- *   markerIds: number[]
- * }} SavedTrip
- * @typedef {{
- *   id: string,
- *   label: string,
- *   icon: import('react').ComponentProps<typeof import('@expo/vector-icons').MaterialIcons>['name'],
- *   color: string,
- *   bg: string
- * }} SavedListCategory
- * @typedef {{
- *   initialize: () => void,
- *   getAll: () => MarkerRow[],
- *   getLists: () => SavedListRow[],
- *   getListIconOverrides?: () => Array<{ list_id: string, emoji: string }>,
- *   getListColorOverrides?: () => Array<{ list_id: string, color: string, bg: string }>,
- *   getTrips?: () => SavedTrip[],
- *   insert: (
- *     coordinate: Coordinate,
- *     title: string,
- *     listType: string,
- *     notes: string,
- *     visitedAt: string | null
- *   ) => number,
- *   insertList: (name: string) => number,
- *   renameList: (listId: string, name: string) => void,
- *   deleteList: (listId: string) => void,
- *   insertTrip: (name: string, startDate: string, endDate: string) => number,
- *   updateTrip: (id: number, name: string, startDate: string, endDate: string) => void,
- *   deleteTrip: (id: number) => void,
- *   setTripStops: (tripId: number, markerIds: number[]) => void,
- *   setListIcon: (listId: string, emoji: string | null) => void,
- *   setListColor: (listId: string, colors: { color: string, bg: string } | null) => void,
- *   update: (
- *     id: number,
- *     coordinate: Coordinate,
- *     title: string,
- *     listType: string,
- *     photos: string[],
- *     progress: string,
- *     notes: string,
- *     visitedAt: string | null
- *   ) => void,
- *   updatePhotos: (id: number, photos: string[]) => void,
- *   updateProgress: (id: number, progress: string) => void,
- *   delete: (id: number) => void
- * }} SavedMarkerStorage
- * @typedef {{
- *   markers: SavedMarker[],
- *   customLists: SavedListCategory[],
- *   trips: SavedTrip[],
- *   listIconOverrides: Record<string, string>,
- *   listColorOverrides: Record<string, { color: string, bg: string }>,
- *   loadError: string | null
- * }} SavedMarkersState
- */
+/** @typedef {import('../types/domain').Coordinate} Coordinate */
+/** @typedef {import('../types/domain').MarkerRow} MarkerRow */
+/** @typedef {import('../types/domain').SavedListRow} SavedListRow */
+/** @typedef {import('../types/domain').SavedMarker} SavedMarker */
+/** @typedef {import('../types/domain').SavedTrip} SavedTrip */
+/** @typedef {import('../types/domain').SavedListCategory} SavedListCategory */
+/** @typedef {import('../types/domain').SavedMarkerStorage} SavedMarkerStorage */
+/** @typedef {import('../types/domain').SavedMarkersState} SavedMarkersState */
+/** @typedef {import('../types/domain').PlaceProgress} PlaceProgress */
 
 const CUSTOM_LIST_COLORS = [
   { color: '#6750A4', bg: '#EADDFF' },
@@ -103,6 +28,11 @@ function validatePhotos(photos) {
   if (!Array.isArray(photos) || photos.length > MAX_PLACE_PHOTOS) {
     throw new Error(`A place can have at most ${MAX_PLACE_PHOTOS} photos.`);
   }
+}
+
+/** @param {string | null | undefined} progress @returns {progress is PlaceProgress} */
+function isPlaceProgress(progress) {
+  return Object.values(PLACE_PROGRESS).some((value) => value === progress);
 }
 
 /**
@@ -146,7 +76,9 @@ export function loadSavedMarkers(storage, defaultListType) {
       title: marker.title ?? '',
       listType: marker.listType || defaultListType,
       photos,
-      progress: marker.progress || PLACE_PROGRESS.unvisited,
+      progress: isPlaceProgress(marker.progress)
+        ? marker.progress
+        : PLACE_PROGRESS.unvisited,
       notes: marker.notes || '',
       visitedAt: marker.visitedAt || null,
     };
@@ -376,7 +308,7 @@ export function saveListIcon(storage, listId, emoji) {
  * @param {string} title
  * @param {string} listType
  * @param {string[]} [photos]
- * @param {string} [progress]
+ * @param {PlaceProgress} [progress]
  * @param {string} [notes]
  * @param {string | null} [visitedAt]
  * @returns {SavedMarker}
@@ -414,7 +346,7 @@ export function saveMarkerToDatabase(
  * @param {string} title
  * @param {string} listType
  * @param {string[]} [photos]
- * @param {string} [progress]
+ * @param {PlaceProgress} [progress]
  * @param {string} [notes]
  * @param {string | null} [visitedAt]
  * @returns {SavedMarker}
@@ -467,7 +399,7 @@ export function updateSavedMarkerPhotos(storage, id, photos) {
 /**
  * @param {SavedMarkerStorage} storage
  * @param {number} id
- * @param {string} progress
+ * @param {PlaceProgress} progress
  */
 export function updateSavedMarkerProgress(storage, id, progress) {
   storage.updateProgress(id, progress);

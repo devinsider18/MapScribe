@@ -47,33 +47,13 @@ import {
   loadTrips,
 } from '../models/savedMarkers.mjs';
 
+/** @typedef {import('../types/domain').Coordinate} Coordinate */
+/** @typedef {import('../types/domain').PlaceProgress} PlaceProgress */
+/** @typedef {import('../types/domain').SavedMarker} SavedMarker */
+/** @typedef {import('../types/domain').SavedTrip} SavedTrip */
+/** @typedef {import('../types/domain').SavedListCategory} SavedListCategory */
+
 /**
- * @typedef {{ latitude: number, longitude: number }} Coordinate
- * @typedef {{
- *   id: number,
- *   coordinate: Coordinate,
- *   title: string,
- *   listType: string,
- *   photos: string[],
- *   progress: string,
- *   notes: string,
- *   visitedAt: string | null
- * }} SavedMarker
- * @typedef {{
- *   id: number,
- *   name: string,
- *   startDate: string,
- *   endDate: string,
- *   markerIds: number[]
- * }} SavedTrip
- * @typedef {{
- *   id: string,
- *   label: string,
- *   icon: import('react').ComponentProps<typeof import('@expo/vector-icons').MaterialIcons>['name'],
- *   color: string,
- *   bg: string,
- *   emoji?: string | null
- * }} SavedListCategory
  * @typedef {{
  *   markers: SavedMarker[],
  *   trips: SavedTrip[],
@@ -98,7 +78,7 @@ import {
  *     title: string,
  *     listType: string,
  *     photos?: string[],
- *     progress?: string,
+ *     progress?: PlaceProgress,
  *     notes?: string,
  *     visitedAt?: string | null
  *   ) => void,
@@ -109,7 +89,7 @@ import {
  *   deleteTrip: (id: number) => void,
  *   updateTripStops: (id: number, markerIds: number[]) => void,
  *   updateSavedMarkerPhotos: (id: number, photos: string[]) => Promise<void>,
- *   updateSavedMarkerProgress: (id: number, progress: string) => void,
+ *   updateSavedMarkerProgress: (id: number, progress: PlaceProgress) => void,
  *   deleteSavedMarker: (id: number) => Promise<void>,
  *   reloadSavedMarkers: () => void
  * }} SavedPlaces
@@ -194,7 +174,7 @@ export default function useSavedMarkers() {
    * @param {string} title
    * @param {string} listType
    * @param {string[]} [photos]
-   * @param {string} [progress]
+   * @param {PlaceProgress} [progress]
    * @param {string} [notes]
    * @param {string | null} [visitedAt]
    */
@@ -262,7 +242,7 @@ export default function useSavedMarkers() {
 
   /**
    * @param {number} id
-   * @param {string} progress
+   * @param {PlaceProgress} progress
    */
   const updateExistingMarkerProgress = (id, progress) => {
     updateSavedMarkerProgress(markerStorage, id, progress);

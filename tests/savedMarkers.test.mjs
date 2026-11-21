@@ -171,6 +171,25 @@ test('loads corrupted photo JSON as an empty gallery', () => {
   assert.deepEqual(loadSavedMarkers(storage, 'want_to_go')[0].photos, []);
 });
 
+test('falls back to the default progress for an unsupported stored value', () => {
+  const storage = createStorage({
+    markers: [
+      {
+        id: 11,
+        latitude: 51.5,
+        longitude: -0.1,
+        title: 'Museum',
+        progress: 'archived',
+      },
+    ],
+  });
+
+  assert.equal(
+    loadSavedMarkers(storage, 'want_to_go')[0].progress,
+    PLACE_PROGRESS.unvisited
+  );
+});
+
 test('returns a visible load error when storage initialization fails', () => {
   const state = createInitialSavedMarkersState(
     createStorage({ error: new Error('disk error') }),

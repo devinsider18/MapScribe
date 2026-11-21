@@ -2,23 +2,12 @@ import * as SQLite from 'expo-sqlite';
 import { DEFAULT_LIST_TYPE } from '../constants/listCategories';
 import { PLACE_PROGRESS } from '../constants/placeProgress.mjs';
 
-/**
- * @typedef {{ latitude: number, longitude: number }} Coordinate
- * @typedef {{
- *   id: number,
- *   latitude: number,
- *   longitude: number,
- *   title: string | null,
- *   listType: string | null,
- *   photos: string | null,
- *   progress: string | null,
- *   notes: string | null,
- *   visitedAt: string | null
- * }} MarkerRow
- * @typedef {{ id: number, name: string }} SavedListRow
- * @typedef {{ list_id: string, emoji: string }} ListIconOverride
- * @typedef {{ id: number, name: string, startDate: string, endDate: string, markerIds: number[] }} TripRow
- */
+/** @typedef {import('../types/domain').Coordinate} Coordinate */
+/** @typedef {import('../types/domain').MarkerRow} MarkerRow */
+/** @typedef {import('../types/domain').SavedListRow} SavedListRow */
+/** @typedef {import('../types/domain').SavedTrip} SavedTrip */
+/** @typedef {{ list_id: string, emoji: string }} ListIconOverride */
+/** @typedef {{ list_id: string, color: string, bg: string }} ListColorOverride */
 
 const db = SQLite.openDatabaseSync('mapscribe.db');
 
@@ -136,7 +125,7 @@ export function addMarkerToDb(
  * @param {string} title
  * @param {string} listType
  * @param {string[]} [photos]
- * @param {string} [progress]
+ * @param {import('../types/domain').PlaceProgress} [progress]
  * @param {string} [notes]
  * @param {string | null} [visitedAt]
  */
@@ -191,7 +180,7 @@ export function updateMarkerPhotosInDb(id, photos) {
 
 /**
  * @param {number} id
- * @param {string} progress
+ * @param {import('../types/domain').PlaceProgress} progress
  */
 export function updateMarkerProgressInDb(id, progress) {
   try {
@@ -282,7 +271,7 @@ export function deleteEmptySavedListFromDb(listId) {
   }
 }
 
-/** @returns {TripRow[]} */
+/** @returns {SavedTrip[]} */
 export function getTrips() {
   try {
     const rows = db.getAllSync(`
@@ -429,7 +418,7 @@ export function setListIconOverride(listId, emoji) {
   }
 }
 
-/** @returns {Array<{ list_id: string, color: string, bg: string }>} */
+/** @returns {ListColorOverride[]} */
 export function getListColorOverrides() {
   try {
     return db.getAllSync('SELECT list_id, color, bg FROM list_color_overrides;');

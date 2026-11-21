@@ -1,3 +1,4 @@
+/** @type {{ unvisited: 'unvisited', planned: 'planned', visited: 'visited' }} */
 export const PLACE_PROGRESS = {
   unvisited: 'unvisited',
   planned: 'planned',
@@ -16,7 +17,7 @@ export const PLACE_PROGRESS_ORDER = [
   PLACE_PROGRESS.visited,
 ];
 
-/** @param {string} progress */
+/** @param {import('../types/domain').PlaceProgress} progress */
 export function getNextPlaceProgress(progress) {
   const currentIndex = PLACE_PROGRESS_ORDER.indexOf(progress);
   return PLACE_PROGRESS_ORDER[(currentIndex + 1) % PLACE_PROGRESS_ORDER.length];

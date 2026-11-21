@@ -38,7 +38,7 @@ import ConfirmDialog from './ConfirmDialog';
  *   listType: string,
  *   markerId: number | null,
  *   photos: string[],
- *   progress: string,
+ *   progress: import('../types/domain').PlaceProgress,
  *   notes: string,
  *   visitedAt: string
  * }} PlaceModalState
@@ -310,7 +310,7 @@ export default function MapViewComponent({
     setModalState((current) => ({ ...current, photos }));
   };
 
-  /** @param {string} progress */
+  /** @param {import('../types/domain').PlaceProgress} progress */
   const handleProgressChange = (progress) => {
     if (modalState.markerId === null) return;
 
