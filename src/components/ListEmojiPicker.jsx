@@ -1,17 +1,14 @@
 import { MaterialIcons } from '@expo/vector-icons';
-import { StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import {
   COLORS,
   CONTROL_SIZE,
-  FONT_SIZE,
   ICON_SIZE,
-  INPUT_LIMITS,
   RADII,
   SPACING,
 } from '../constants/theme';
 import {
   encodeMaterialIcon,
-  getFirstEmoji,
   getMaterialIconName,
   MAP_ICON_NAMES,
 } from '../constants/listIcons.mjs';
@@ -55,18 +52,7 @@ export default function ListEmojiPicker({
           );
         })}
       </View>
-      <View style={styles.inputRow}>
-        <TextInput
-          accessibilityLabel="List emoji, one emoji only"
-          autoCapitalize="none"
-          autoCorrect={false}
-          maxLength={INPUT_LIMITS.emoji}
-          onChangeText={(value) => onEmojiChange(getFirstEmoji(value))}
-          placeholder="😀"
-          placeholderTextColor={COLORS.placeholder}
-          value={selectedMaterialIcon ? '' : selectedEmoji}
-          style={styles.input}
-        />
+      <View style={styles.defaultRow}>
         <TouchableOpacity
           accessibilityRole="button"
           accessibilityLabel="Use default list icon"
@@ -103,22 +89,10 @@ const styles = StyleSheet.create({
     borderColor: COLORS.primary,
     backgroundColor: COLORS.primaryContainer,
   },
-  inputRow: {
+  defaultRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: SPACING.sm,
-  },
-  input: {
-    width: CONTROL_SIZE.height,
-    minHeight: CONTROL_SIZE.height,
-    paddingHorizontal: 0,
-    borderWidth: 1,
-    borderColor: COLORS.placeholder,
-    borderRadius: RADII.control,
-    color: COLORS.textPrimary,
-    backgroundColor: COLORS.white,
-    fontSize: FONT_SIZE.emoji,
-    textAlign: 'center',
   },
   defaultButton: {
     width: CONTROL_SIZE.iconButton,

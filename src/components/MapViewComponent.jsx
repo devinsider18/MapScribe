@@ -34,6 +34,7 @@ const EMPTY_MODAL_STATE = {
 async function getInitialRegion() {
   const { status } = await Location.requestForegroundPermissionsAsync();
   if (status !== 'granted') return null;
+  if (!(await Location.hasServicesEnabledAsync())) return null;
 
   const location = await Location.getCurrentPositionAsync();
   return {
@@ -42,6 +43,11 @@ async function getInitialRegion() {
     latitudeDelta: MAP_DELTA,
     longitudeDelta: MAP_DELTA,
   };
+}
+
+function isLocationUnavailable(error) {
+  return error?.code === 'ERR_CURRENT_LOCATION_IS_UNAVAILABLE'
+    || error?.message?.includes('unsatisfied device settings');
 }
 
 /**
@@ -81,7 +87,7 @@ export default function MapViewComponent({ savedPlaces }) {
       .catch((error) => {
         if (!isMounted) return;
 
-        if (error?.code === 'ERR_CURRENT_LOCATION_IS_UNAVAILABLE') {
+        if (isLocationUnavailable(error)) {
           setLocationNotice(LOCATION_UNAVAILABLE);
           return;
         }

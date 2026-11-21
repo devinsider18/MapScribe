@@ -526,7 +526,7 @@ function CreateListDialog({
             />
             <Text style={styles.dialogEmojiLabel}>List icon (optional)</Text>
             <Text style={styles.dialogHint}>
-              Choose a map icon or enter a single emoji.
+              Choose a map icon.
             </Text>
             <ListEmojiPicker selectedEmoji={emoji} onEmojiChange={onEmojiChange} />
             <Text style={styles.dialogEmojiLabel}>List color (optional)</Text>
@@ -590,7 +590,7 @@ function EditListIconDialog({
             keyboardShouldPersistTaps="handled"
           >
             <Text style={styles.dialogHint}>
-              Choose a map icon or enter a single emoji.
+              Choose a map icon.
             </Text>
             <ListEmojiPicker
               selectedEmoji={emoji}
