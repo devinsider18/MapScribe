@@ -22,6 +22,7 @@ async function ensurePhotoDirectory() {
 
 /**
  * @param {{ uri: string, fileName?: string | null }} asset
+ * @param {number} placeId
  * @returns {Promise<string>}
  */
 export async function copyPhotoToPlaceStorage(asset, placeId) {
@@ -40,6 +41,7 @@ export async function copyPhotoToPlaceStorage(asset, placeId) {
 
 /**
  * @param {string[]} photoUris
+ * @returns {Promise<void>}
  */
 export async function deletePlacePhotoFiles(photoUris) {
   if (!photoUris.length) return;

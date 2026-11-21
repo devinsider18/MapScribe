@@ -2,6 +2,13 @@ import { COLORS } from './theme';
 
 export const DEFAULT_LIST_TYPE = 'want_to_go';
 
+/** @type {Array<{
+ *   id: string,
+ *   label: string,
+ *   icon: import('react').ComponentProps<typeof import('@expo/vector-icons').MaterialIcons>['name'],
+ *   color: string,
+ *   bg: string
+ * }>} */
 export const LIST_CATEGORIES = [
   {
     id: DEFAULT_LIST_TYPE,

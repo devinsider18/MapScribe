@@ -7,17 +7,14 @@ import ListCategoryIcon from './ListCategoryIcon';
 
 /**
  * @param {{
- *   markers: Array<{
- *     id: number,
- *     coordinate: { latitude: number, longitude: number },
- *     title: string,
- *     listType: string
- *   }>,
- *   onMarkerPress: (marker: object) => void,
+ *   markers: ReturnType<typeof import('../hooks/useSavedMarkers').default>['markers'],
+ *   onMarkerPress: (
+ *     marker: ReturnType<typeof import('../hooks/useSavedMarkers').default>['markers'][number]
+ *   ) => void,
  *   listCategories?: Array<{
  *     id: string,
  *     label: string,
- *     icon: string,
+ *     icon: import('react').ComponentProps<typeof import('@expo/vector-icons').MaterialIcons>['name'],
  *     color: string,
  *     bg: string,
  *     emoji?: string | null

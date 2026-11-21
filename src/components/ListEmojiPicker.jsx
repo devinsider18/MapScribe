@@ -17,7 +17,7 @@ import {
  * @param {{
  *   selectedEmoji: string,
  *   onEmojiChange: (emoji: string) => void,
- *   defaultIcon?: string,
+ *   defaultIcon?: import('react').ComponentProps<typeof MaterialIcons>['name'],
  *   defaultColor?: string
  * }} props
  */

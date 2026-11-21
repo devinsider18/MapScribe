@@ -17,7 +17,7 @@ const styles = StyleSheet.create({
     padding: SPACING.md,
   },
   modalBackdrop: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
   },
   modalContent: {
     width: '100%',
@@ -67,6 +67,10 @@ const styles = StyleSheet.create({
     fontSize: FONT_SIZE.bodyLarge,
     color: COLORS.textStrong,
     marginBottom: SPACING.lg,
+  },
+  notesInput: {
+    minHeight: 88,
+    textAlignVertical: 'top',
   },
   sectionLabel: {
     fontSize: FONT_SIZE.body,

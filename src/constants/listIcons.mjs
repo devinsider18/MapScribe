@@ -1,3 +1,6 @@
+/** @typedef {import('react').ComponentProps<typeof import('@expo/vector-icons').MaterialIcons>['name']} MaterialIconName */
+
+/** @type {MaterialIconName[]} */
 export const MAP_ICON_NAMES = [
   'map',
   'place',
@@ -26,19 +29,25 @@ export const MAP_ICON_NAMES = [
 const MATERIAL_ICON_PREFIX = 'material-icon:';
 const FIRST_EMOJI_PATTERN = /(?:[#*0-9]\uFE0F?\u20E3|\p{Regional_Indicator}{2}|\p{Extended_Pictographic}(?:\uFE0F|\uFE0E)?(?:\p{Emoji_Modifier})?(?:\u200D\p{Extended_Pictographic}(?:\uFE0F|\uFE0E)?(?:\p{Emoji_Modifier})?)*)/u;
 
+/** @param {MaterialIconName} iconName */
 export function encodeMaterialIcon(iconName) {
   return `${MATERIAL_ICON_PREFIX}${iconName}`;
 }
 
+/**
+ * @param {string} value
+ * @returns {MaterialIconName | null}
+ */
 export function getMaterialIconName(value) {
   if (typeof value !== 'string' || !value.startsWith(MATERIAL_ICON_PREFIX)) {
     return null;
   }
 
   const iconName = value.slice(MATERIAL_ICON_PREFIX.length);
-  return MAP_ICON_NAMES.includes(iconName) ? iconName : null;
+  return MAP_ICON_NAMES.find((name) => name === iconName) ?? null;
 }
 
+/** @param {string} value */
 export function getFirstEmoji(value) {
   return FIRST_EMOJI_PATTERN.exec(value)?.[0] ?? '';
 }

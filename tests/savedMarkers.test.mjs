@@ -3,13 +3,20 @@ import test from 'node:test';
 import {
   createInitialSavedMarkersState,
   createSavedList,
+  createSavedTrip,
+  deleteEmptySavedList,
+  deleteSavedTrip,
   deleteSavedMarker,
+  loadTrips,
   loadListIconOverrides,
   loadListColorOverrides,
   loadSavedMarkers,
   saveListIcon,
   saveListColor,
   saveMarkerToDatabase,
+  renameSavedList,
+  updateSavedTrip,
+  updateSavedTripStops,
   updateSavedMarker,
   updateSavedMarkerPhotos,
   updateSavedMarkerProgress,
@@ -21,6 +28,7 @@ function createStorage({
   lists = [],
   listIconOverrides = [],
   listColorOverrides = [],
+  trips = [],
   insertId = 1,
   listInsertId = 1,
   error = null,
@@ -45,15 +53,44 @@ function createStorage({
       if (error) throw error;
       return listColorOverrides;
     },
-    insert(coordinate, title, listType) {
+    getTrips() {
       if (error) throw error;
-      this.inserted = { coordinate, title, listType };
+      return trips;
+    },
+    insert(coordinate, title, listType, notes, visitedAt) {
+      if (error) throw error;
+      this.inserted = { coordinate, title, listType, notes, visitedAt };
       return insertId;
     },
     insertList(name) {
       if (error) throw error;
       this.insertedListName = name;
       return listInsertId;
+    },
+    renameList(listId, name) {
+      if (error) throw error;
+      this.renamedList = { listId, name };
+    },
+    deleteList(listId) {
+      if (error) throw error;
+      this.deletedListId = listId;
+    },
+    insertTrip(name, startDate, endDate) {
+      if (error) throw error;
+      this.insertedTrip = { name, startDate, endDate };
+      return 4;
+    },
+    updateTrip(id, name, startDate, endDate) {
+      if (error) throw error;
+      this.updatedTrip = { id, name, startDate, endDate };
+    },
+    deleteTrip(id) {
+      if (error) throw error;
+      this.deletedTripId = id;
+    },
+    setTripStops(tripId, markerIds) {
+      if (error) throw error;
+      this.tripStops = { tripId, markerIds };
     },
     setListIcon(listId, emoji) {
       if (error) throw error;
@@ -63,9 +100,9 @@ function createStorage({
       if (error) throw error;
       this.savedColor = { listId, colors };
     },
-    update(id, coordinate, title, listType, photos, progress) {
+    update(id, coordinate, title, listType, photos, progress, notes, visitedAt) {
       if (error) throw error;
-      this.updated = { id, coordinate, title, listType, photos, progress };
+      this.updated = { id, coordinate, title, listType, photos, progress, notes, visitedAt };
     },
     updatePhotos(id, photos) {
       if (error) throw error;
@@ -94,6 +131,8 @@ test('loads saved markers and applies the default list to legacy rows', () => {
         listType: 'favorites',
         photos: '["file:///places/museum.jpg"]',
         progress: PLACE_PROGRESS.visited,
+        notes: 'Quiet in the morning',
+        visitedAt: '2024-06-10',
       },
     ],
   });
@@ -106,6 +145,8 @@ test('loads saved markers and applies the default list to legacy rows', () => {
       listType: 'want_to_go',
       photos: [],
       progress: PLACE_PROGRESS.unvisited,
+      notes: '',
+      visitedAt: null,
     },
     {
       id: 9,
@@ -114,8 +155,20 @@ test('loads saved markers and applies the default list to legacy rows', () => {
       listType: 'favorites',
       photos: ['file:///places/museum.jpg'],
       progress: PLACE_PROGRESS.visited,
+      notes: 'Quiet in the morning',
+      visitedAt: '2024-06-10',
     },
   ]);
+});
+
+test('loads corrupted photo JSON as an empty gallery', () => {
+  const storage = createStorage({
+    markers: [
+      { id: 10, latitude: 51.5, longitude: -0.1, title: 'Museum', photos: '{broken' },
+    ],
+  });
+
+  assert.deepEqual(loadSavedMarkers(storage, 'want_to_go')[0].photos, []);
 });
 
 test('returns a visible load error when storage initialization fails', () => {
@@ -127,6 +180,7 @@ test('returns a visible load error when storage initialization fails', () => {
   assert.deepEqual(state, {
     markers: [],
     customLists: [],
+    trips: [],
     listIconOverrides: {},
     listColorOverrides: {},
     loadError: 'Saved places could not be loaded.',
@@ -186,6 +240,8 @@ test('persists a marker before returning its map representation', () => {
     coordinate,
     title: 'Library',
     listType: 'favorites',
+    notes: '',
+    visitedAt: null,
   });
   assert.deepEqual(marker, {
     id: 12,
@@ -194,6 +250,8 @@ test('persists a marker before returning its map representation', () => {
     listType: 'favorites',
     photos: [],
     progress: PLACE_PROGRESS.unvisited,
+    notes: '',
+    visitedAt: null,
   });
 });
 
@@ -216,6 +274,8 @@ test('persists updated marker details before returning the updated marker', () =
       listType: 'favorites',
       photos: [],
       progress: PLACE_PROGRESS.unvisited,
+      notes: '',
+      visitedAt: null,
     }
   );
   assert.deepEqual(storage.updated, {
@@ -225,6 +285,8 @@ test('persists updated marker details before returning the updated marker', () =
     listType: 'favorites',
     photos: [],
     progress: PLACE_PROGRESS.unvisited,
+    notes: '',
+    visitedAt: null,
   });
 });
 
@@ -269,4 +331,111 @@ test('rejects photo galleries that exceed the per-place limit', () => {
 
   assert.throws(() => updateSavedMarkerPhotos(storage, 12, photos), /at most 5 photos/);
   assert.equal(storage.updatedPhotos, undefined);
+});
+
+test('renames custom lists and rejects names used by another list or built-in category', () => {
+  const storage = createStorage({ lists: [{ id: 7, name: 'Coffee' }, { id: 8, name: 'Parks' }] });
+  assert.equal(renameSavedList(storage, 'custom_7', '  Cafes  ').label, 'Cafes');
+  assert.deepEqual(storage.renamedList, { listId: 'custom_7', name: 'Cafes' });
+  assert.throws(() => renameSavedList(storage, 'custom_7', 'Parks'), /already exists/);
+  assert.throws(() => renameSavedList(storage, 'custom_7', 'Favorites', ['Favorites']), /already exists/);
+});
+
+test('only allows deleting empty custom lists', () => {
+  const storage = createStorage({
+    markers: [{ id: 3, listType: 'custom_7' }],
+  });
+  assert.throws(() => deleteEmptySavedList(storage, 'custom_7'), /must be empty|all places/);
+  assert.equal(storage.deletedListId, undefined);
+  deleteEmptySavedList(createStorage(), 'custom_7');
+});
+
+test('creates trips with validated date ranges and persists ordered stops', () => {
+  const storage = createStorage();
+  const trip = createSavedTrip(storage, {
+    name: '  Weekend away ',
+    startDate: '2025-05-01',
+    endDate: '2025-05-03',
+  });
+  assert.deepEqual(trip, {
+    id: 4,
+    name: 'Weekend away',
+    startDate: '2025-05-01',
+    endDate: '2025-05-03',
+    markerIds: [],
+  });
+  assert.deepEqual(storage.insertedTrip, {
+    name: 'Weekend away',
+    startDate: '2025-05-01',
+    endDate: '2025-05-03',
+  });
+  assert.throws(() => createSavedTrip(storage, {
+    name: 'Invalid',
+    startDate: '2025-05-04',
+    endDate: '2025-05-03',
+  }), /before its start date/);
+  assert.deepEqual(updateSavedTrip(storage, 4, {
+    name: 'Updated trip',
+    startDate: '2025-05-02',
+    endDate: '2025-05-04',
+  }), {
+    name: 'Updated trip',
+    startDate: '2025-05-02',
+    endDate: '2025-05-04',
+  });
+  assert.deepEqual(storage.updatedTrip, {
+    id: 4,
+    name: 'Updated trip',
+    startDate: '2025-05-02',
+    endDate: '2025-05-04',
+  });
+  assert.deepEqual(updateSavedTripStops(storage, 4, [9, 3]), [9, 3]);
+  assert.deepEqual(storage.tripStops, { tripId: 4, markerIds: [9, 3] });
+  assert.throws(() => updateSavedTripStops(storage, 4, [9, 9]), /once in a trip/);
+  deleteSavedTrip(storage, 4);
+  assert.equal(storage.deletedTripId, 4);
+});
+
+test('loads saved trips from storage', () => {
+  const trips = [{
+    id: 2,
+    name: 'City break',
+    startDate: '2025-05-01',
+    endDate: '2025-05-02',
+    markerIds: [1, 5],
+  }];
+  assert.deepEqual(loadTrips(createStorage({ trips })), trips);
+});
+
+test('persists place notes and validates optional visit dates', () => {
+  const storage = createStorage({ insertId: 13 });
+  const marker = saveMarkerToDatabase(
+    storage,
+    { latitude: 0, longitude: 0 },
+    'Garden',
+    'want_to_go',
+    [],
+    undefined,
+    'Loved the old trees',
+    '2025-04-20'
+  );
+  assert.equal(marker.notes, 'Loved the old trees');
+  assert.equal(marker.visitedAt, '2025-04-20');
+  assert.deepEqual(storage.inserted, {
+    coordinate: { latitude: 0, longitude: 0 },
+    title: 'Garden',
+    listType: 'want_to_go',
+    notes: 'Loved the old trees',
+    visitedAt: '2025-04-20',
+  });
+  assert.throws(() => saveMarkerToDatabase(
+    storage,
+    { latitude: 0, longitude: 0 },
+    'Invalid',
+    'want_to_go',
+    [],
+    undefined,
+    '',
+    '2025-02-31'
+  ), /valid visit date/);
 });

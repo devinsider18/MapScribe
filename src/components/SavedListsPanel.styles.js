@@ -33,6 +33,10 @@ export default StyleSheet.create({
     backgroundColor: COLORS.handle,
     marginBottom: SPACING.md,
   },
+  handleArea: {
+    minHeight: 40,
+    justifyContent: 'center',
+  },
   title: {
     color: COLORS.textPrimary,
     fontSize: FONT_SIZE.screenTitle,
@@ -59,6 +63,21 @@ export default StyleSheet.create({
     color: COLORS.textPrimary,
     fontSize: FONT_SIZE.body,
     fontWeight: '600',
+  },
+  searchBox: {
+    minHeight: CONTROL_SIZE.height,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+    marginBottom: SPACING.md,
+    paddingHorizontal: SPACING.md,
+    borderRadius: RADII.control,
+    backgroundColor: COLORS.white,
+  },
+  searchInput: {
+    flex: 1,
+    color: COLORS.textPrimary,
+    fontSize: FONT_SIZE.body,
   },
   error: {
     color: COLORS.danger,
@@ -137,10 +156,12 @@ export default StyleSheet.create({
     gap: SPACING.sm,
   },
   cardPlaceName: {
-    flex: 1,
-    minWidth: 0,
     color: COLORS.textPrimary,
     fontSize: FONT_SIZE.body,
+  },
+  cardPlaceNameButton: {
+    flex: 1,
+    minWidth: 0,
   },
   progressButton: {
     paddingHorizontal: SPACING.sm,
@@ -173,6 +194,161 @@ export default StyleSheet.create({
     paddingVertical: SPACING.compact,
     paddingLeft: SPACING.widest,
   },
+  tripPanel: {
+    flex: 1,
+    backgroundColor: COLORS.panelSurface,
+    borderTopLeftRadius: RADII.xl,
+    borderTopRightRadius: RADII.xl,
+    paddingTop: SPACING.compact,
+    paddingHorizontal: SPACING.xl,
+    paddingBottom: SPACING.sm,
+    elevation: SHADOWS.savedLists.elevation,
+    shadowColor: COLORS.black,
+    shadowOffset: { width: 0, height: SHADOWS.savedLists.offsetY },
+    shadowOpacity: SHADOWS.savedLists.opacity,
+    shadowRadius: SHADOWS.savedLists.radius,
+  },
+  tripHandleArea: {
+    minHeight: 40,
+    justifyContent: 'center',
+  },
+  tripList: {
+    flex: 1,
+  },
+  tripListContent: {
+    gap: SPACING.sm,
+    paddingBottom: SPACING.md,
+  },
+  tripSectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: SPACING.xs,
+  },
+  tripSectionTitle: {
+    color: COLORS.textPrimary,
+    fontSize: FONT_SIZE.section,
+    fontWeight: '700',
+  },
+  tripSectionSubtitle: {
+    color: COLORS.textMuted,
+    fontSize: FONT_SIZE.small,
+    marginTop: SPACING.xs,
+  },
+  tripCreateButton: {
+    minHeight: CONTROL_SIZE.actionButton,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.xs,
+    paddingHorizontal: SPACING.md,
+    borderRadius: RADII.pill,
+    backgroundColor: COLORS.primaryContainer,
+  },
+  tripCreateText: {
+    color: COLORS.primary,
+    fontSize: FONT_SIZE.small,
+    fontWeight: '600',
+  },
+  tripCard: {
+    overflow: 'hidden',
+    padding: SPACING.md,
+    borderRadius: RADII.card,
+    backgroundColor: COLORS.cardSurface,
+  },
+  tripCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  tripCardInfo: {
+    flex: 1,
+  },
+  tripCardName: {
+    color: COLORS.textPrimary,
+    fontSize: FONT_SIZE.bodyLarge,
+    fontWeight: '600',
+  },
+  tripCardDates: {
+    color: COLORS.textMuted,
+    fontSize: FONT_SIZE.small,
+    marginTop: SPACING.xs,
+  },
+  tripActions: {
+    flexDirection: 'row',
+    gap: SPACING.sm,
+    marginTop: SPACING.xs,
+  },
+  tripActionButton: {
+    minHeight: CONTROL_SIZE.actionButton,
+    justifyContent: 'center',
+    paddingHorizontal: SPACING.sm,
+  },
+  tripActionText: {
+    color: COLORS.primary,
+    fontSize: FONT_SIZE.small,
+    fontWeight: '600',
+  },
+  tripDeleteText: {
+    color: COLORS.danger,
+    fontSize: FONT_SIZE.small,
+    fontWeight: '600',
+  },
+  tripStops: {
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: COLORS.divider,
+    marginTop: SPACING.xs,
+    paddingTop: SPACING.sm,
+  },
+  tripStopRow: {
+    minHeight: CONTROL_SIZE.actionButton,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.xxs,
+  },
+  tripStopName: {
+    flex: 1,
+    minWidth: 0,
+    paddingVertical: SPACING.xs,
+  },
+  tripStopText: {
+    color: COLORS.textPrimary,
+    fontSize: FONT_SIZE.body,
+  },
+  tripOrderButton: {
+    width: CONTROL_SIZE.actionButton,
+    height: CONTROL_SIZE.actionButton,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  tripEmpty: {
+    color: COLORS.textMuted,
+    fontSize: FONT_SIZE.small,
+    paddingVertical: SPACING.sm,
+  },
+  tripStopsLabel: {
+    color: COLORS.textSubtle,
+    fontSize: FONT_SIZE.small,
+    fontWeight: '600',
+    marginTop: SPACING.sm,
+    marginBottom: SPACING.xs,
+  },
+  tripPlacePickerRow: {
+    minHeight: CONTROL_SIZE.actionButton,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+  },
+  tripPickerName: {
+    flex: 1,
+    color: COLORS.textPrimary,
+    fontSize: FONT_SIZE.small,
+  },
+  tripDateLabel: {
+    color: COLORS.textSubtle,
+    fontSize: FONT_SIZE.small,
+    fontWeight: '600',
+    marginTop: SPACING.md,
+    marginBottom: SPACING.xs,
+  },
   dialogOverlay: {
     flex: 1,
     justifyContent: 'center',
@@ -181,7 +357,7 @@ export default StyleSheet.create({
     backgroundColor: COLORS.panelScrim,
   },
   dialogBackdrop: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
   },
   dialogContent: {
     width: '100%',

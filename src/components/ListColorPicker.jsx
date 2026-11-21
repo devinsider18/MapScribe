@@ -6,7 +6,9 @@ import { COLORS, FONT_SIZE, ICON_SIZE, RADII, SPACING } from '../constants/theme
 /**
  * @param {{
  *   selectedColorId: string | null,
- *   onColorChange: (colors: { color: string, bg: string } | null) => void
+ *   onColorChange: (
+ *     color: { id: string, label: string, color: string, bg: string } | null
+ *   ) => void
  * }} props
  */
 export default function ListColorPicker({ selectedColorId, onColorChange }) {

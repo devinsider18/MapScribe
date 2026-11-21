@@ -4,6 +4,7 @@ import {
   Alert,
   KeyboardAvoidingView,
   Modal,
+  PanResponder,
   Pressable,
   Platform,
   ScrollView,
@@ -26,20 +27,42 @@ import {
   PLACE_PROGRESS_LABELS,
 } from '../constants/placeProgress.mjs';
 import { LIST_COLOR_OPTIONS } from '../constants/listColors.mjs';
+import { formatPlaceDate, parsePlaceDate } from '../constants/placeDates.mjs';
 import { COLORS, ICON_SIZE, INPUT_LIMITS, SPACING } from '../constants/theme';
 import ListCategoryIcon from './ListCategoryIcon';
 import ListColorPicker from './ListColorPicker';
 import ListEmojiPicker from './ListEmojiPicker';
 import PlacePhotoGallery from './PlacePhotoGallery';
 import SavePlaceModal from './SavePlaceModal';
+import ConfirmDialog from './ConfirmDialog';
 import styles from './SavedListsPanel.styles';
+
+/** @typedef {ReturnType<typeof import('../hooks/useSavedMarkers').default>['markers'][number]} SavedPlace */
+/** @typedef {ReturnType<typeof import('../hooks/useSavedMarkers').default>['listCategories'][number]} SavedListCategory */
+/** @typedef {{ id: string, label: string, color: string, bg: string }} ListColorOption */
 
 /**
  * @param {{
- *   savedPlaces: ReturnType<typeof import('../hooks/useSavedMarkers').default>
+ *   savedPlaces: ReturnType<typeof import('../hooks/useSavedMarkers').default>,
+ *   filters: { listType: string, progress: string },
+ *   onFocusPlace: (
+ *     place: ReturnType<typeof import('../hooks/useSavedMarkers').default>['markers'][number]
+ *   ) => void,
+ *   onDismiss: () => void,
+ *   onDragStart: () => void,
+ *   onDrag: (distance: number) => void,
+ *   onDragEnd: (distance: number, velocity: number) => void
  * }} props
  */
-export default function SavedListsPanel({ savedPlaces }) {
+export default function SavedListsPanel({
+  savedPlaces,
+  filters,
+  onFocusPlace,
+  onDismiss,
+  onDragStart,
+  onDrag,
+  onDragEnd,
+}) {
   const {
     markers,
     listCategories,
@@ -51,20 +74,54 @@ export default function SavedListsPanel({ savedPlaces }) {
     updateSavedMarkerProgress,
     updateSavedListIcon,
     deleteSavedMarker,
+    renameSavedList,
+    deleteSavedList,
   } = savedPlaces;
-  const [expandedList, setExpandedList] = useState(null);
-  const [editingPlace, setEditingPlace] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [editingList, setEditingList] = useState(
+    /** @type {SavedListCategory | null} */ (null)
+  );
+  const [listNameDraft, setListNameDraft] = useState('');
+  const [listNameError, setListNameError] = useState('');
+  const [expandedList, setExpandedList] = useState(
+    /** @type {string | null} */ (null)
+  );
+  const [editingPlace, setEditingPlace] = useState(
+    /** @type {SavedPlace | null} */ (null)
+  );
   const [editError, setEditError] = useState('');
   const [createListVisible, setCreateListVisible] = useState(false);
   const [newListName, setNewListName] = useState('');
   const [newListEmoji, setNewListEmoji] = useState('');
-  const [newListColor, setNewListColor] = useState(null);
+  const [newListColor, setNewListColor] = useState(
+    /** @type {ListColorOption | null} */ (null)
+  );
   const [createListError, setCreateListError] = useState('');
-  const [iconListId, setIconListId] = useState(null);
+  const [iconListId, setIconListId] = useState(
+    /** @type {string | null} */ (null)
+  );
   const [iconDraft, setIconDraft] = useState('');
-  const [iconColorDraft, setIconColorDraft] = useState(null);
+  const [iconColorDraft, setIconColorDraft] = useState(
+    /** @type {ListColorOption | null} */ (null)
+  );
   const [iconError, setIconError] = useState('');
+  const [deleteDialog, setDeleteDialog] = useState(
+    /** @type {{ title: string, message: string, onConfirm: () => void } | null} */ (null)
+  );
   const iconList = listCategories.find((category) => category.id === iconListId);
+  const dismissResponder = PanResponder.create({
+    onMoveShouldSetPanResponderCapture: (_event, { dx, dy }) => (
+      dy > 8 && Math.abs(dy) > Math.abs(dx)
+    ),
+    onMoveShouldSetPanResponder: (_event, { dx, dy }) => (
+      dy > 8 && Math.abs(dy) > Math.abs(dx)
+    ),
+    onPanResponderGrant: onDragStart,
+    onPanResponderMove: (_event, { dy }) => onDrag(dy),
+    onPanResponderTerminationRequest: () => false,
+    onPanResponderRelease: (_event, { dy, vy }) => onDragEnd(dy, vy),
+    onPanResponderTerminate: (_event, { dy, vy }) => onDragEnd(dy, vy),
+  });
 
   useEffect(() => {
     reloadSavedMarkers();
@@ -83,6 +140,49 @@ export default function SavedListsPanel({ savedPlaces }) {
     setCreateListError('');
   };
 
+  const saveListName = () => {
+    if (!editingList) return;
+    try {
+      renameSavedList(editingList.id, listNameDraft);
+      setEditingList(null);
+      setListNameError('');
+    } catch (error) {
+      if (error instanceof Error && error.message === DUPLICATE_LIST_NAME) {
+        setListNameError(DUPLICATE_LIST_NAME);
+        return;
+      }
+      console.error('Failed to rename saved list:', error);
+      setListNameError('Could not rename this list. Please try again.');
+    }
+  };
+
+  /** @param {SavedListCategory} category */
+  const requestDeleteList = (category) => {
+    if (markers.some((marker) => marker.listType === category.id)) {
+      Alert.alert(
+        'List is not empty',
+        'Move or remove all places from this list before deleting it.'
+      );
+      return;
+    }
+
+    setDeleteDialog({
+      title: 'Delete empty list?',
+      message: `Delete "${category.label}"? This list must be empty.`,
+      onConfirm: () => {
+        try {
+          deleteSavedList(category.id);
+        } catch (error) {
+          console.error('Failed to delete saved list:', error);
+          Alert.alert(
+            'Could not delete list',
+            'Move or remove all places from this list, then try again.'
+          );
+        }
+      },
+    });
+  };
+
   const handleCreateList = () => {
     const name = newListName.trim();
     if (!name) {
@@ -90,6 +190,7 @@ export default function SavedListsPanel({ savedPlaces }) {
       return;
     }
 
+    /** @type {SavedListCategory} */
     let newList;
     try {
       newList = createSavedList(name);
@@ -142,6 +243,12 @@ export default function SavedListsPanel({ savedPlaces }) {
 
   const saveEditedPlace = () => {
     if (!editingPlace) return;
+    const visitedAtText = editingPlace.visitedAt ?? '';
+    const visitedAt = parsePlaceDate(visitedAtText);
+    if (visitedAtText.trim() && !visitedAt) {
+      setEditError('Enter the date as DD.MM.YYYY.');
+      return;
+    }
 
     try {
       updateSavedMarker(
@@ -150,7 +257,9 @@ export default function SavedListsPanel({ savedPlaces }) {
         editingPlace.title.trim() || DEFAULT_PLACE_TITLE,
         editingPlace.listType,
         editingPlace.photos,
-        editingPlace.progress
+        editingPlace.progress,
+        editingPlace.notes,
+        visitedAt
       );
       closeEditor();
     } catch (error) {
@@ -159,48 +268,61 @@ export default function SavedListsPanel({ savedPlaces }) {
     }
   };
 
+  /** @param {SavedPlace} place */
   const requestDeletePlace = (place) => {
-    Alert.alert(
-      DELETE_PLACE_TITLE,
-      `Remove "${place.title}" from your saved places?`,
-      [
-        { text: ACTION_LABELS.cancel, style: 'cancel' },
-        {
-          text: ACTION_LABELS.delete,
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await deleteSavedMarker(place.id);
-              if (editingPlace?.id === place.id) closeEditor();
-            } catch (error) {
-              console.error('Failed to delete saved place:', error);
-              if (error.placeDeleted) {
-                if (editingPlace?.id === place.id) closeEditor();
-                Alert.alert(
-                  'Place deleted',
-                  'Some attached photo files could not be removed.'
-                );
-                return;
-              }
-              if (editingPlace?.id === place.id) {
-                setEditError(DELETE_PLACE_FAILURE);
-              } else {
-                Alert.alert('Could not delete place', 'Please try again.');
-              }
-            }
-          },
-        },
-      ]
-    );
+    setDeleteDialog({
+      title: DELETE_PLACE_TITLE,
+      message: `Remove "${place.title}" from your saved places?`,
+      onConfirm: async () => {
+        try {
+          await deleteSavedMarker(place.id);
+          if (editingPlace?.id === place.id) closeEditor();
+        } catch (error) {
+          console.error('Failed to delete saved place:', error);
+          if (error instanceof Error && 'placeDeleted' in error && error.placeDeleted) {
+            if (editingPlace?.id === place.id) closeEditor();
+            Alert.alert('Place deleted', 'Some attached photo files could not be removed.');
+            return;
+          }
+          if (editingPlace?.id === place.id) {
+            setEditError(DELETE_PLACE_FAILURE);
+          } else {
+            Alert.alert('Could not delete place', 'Please try again.');
+          }
+        }
+      },
+    });
   };
 
   return (
     <View style={styles.panel}>
-      <View style={styles.handle} />
-      <Text style={styles.title}>Your lists</Text>
-      <Text style={styles.subtitle}>Saved places, organized your way.</Text>
+      <View {...dismissResponder.panHandlers}>
+        <TouchableOpacity
+          accessibilityRole="button"
+          accessibilityLabel="Close lists"
+          onPress={onDismiss}
+          style={styles.handleArea}
+        >
+          <View style={styles.handle} />
+        </TouchableOpacity>
+        <Text style={styles.title}>Your lists</Text>
+        <Text style={styles.subtitle}>Saved places, organized your way.</Text>
+      </View>
 
       {loadError ? <Text style={styles.error}>{loadError}</Text> : null}
+
+      <View style={styles.searchBox}>
+        <MaterialIcons name="search" size={ICON_SIZE.medium} color={COLORS.textMuted} />
+        <TextInput
+          accessibilityLabel="Search saved places"
+          placeholder="Search your places or notes"
+          placeholderTextColor={COLORS.placeholder}
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          style={styles.searchInput}
+          returnKeyType="search"
+        />
+      </View>
 
       <TouchableOpacity
         accessibilityRole="button"
@@ -215,15 +337,33 @@ export default function SavedListsPanel({ savedPlaces }) {
       </TouchableOpacity>
 
       <ScrollView contentContainerStyle={styles.listContainer}>
-        {listCategories.map((category) => {
-          const places = markers.filter((marker) => marker.listType === category.id);
-          const isExpanded = expandedList === category.id;
+        {listCategories.filter((category) => {
+          if (filters.listType !== 'all' && filters.listType !== category.id) return false;
+          const query = searchQuery.trim().toLocaleLowerCase();
+          return !query || markers.some((marker) => (
+            marker.listType === category.id
+            && (filters.progress === 'all' || marker.progress === filters.progress)
+            && `${marker.title} ${marker.notes}`.toLocaleLowerCase().includes(query)
+          ));
+        }).map((category) => {
+          const query = searchQuery.trim().toLocaleLowerCase();
+          const places = markers.filter((marker) => (
+            marker.listType === category.id
+            && (filters.progress === 'all' || marker.progress === filters.progress)
+            && (
+              !query
+              || `${marker.title} ${marker.notes}`.toLocaleLowerCase().includes(query)
+            )
+          ));
+          const isExpanded = query ? places.length > 0 : expandedList === category.id;
+          const isCustom = category.id.startsWith('custom_');
 
           return (
             <SavedListCard
               key={category.id}
               category={category}
               places={places}
+              listHasPlaces={markers.some((marker) => marker.listType === category.id)}
               expanded={isExpanded}
               onToggle={() => setExpandedList(isExpanded ? null : category.id)}
               onChangeIcon={() => {
@@ -236,6 +376,13 @@ export default function SavedListsPanel({ savedPlaces }) {
                   )) || null
                 );
               }}
+              isCustom={isCustom}
+              onRename={() => {
+                setEditingList(category);
+                setListNameDraft(category.label);
+                setListNameError('');
+              }}
+              onDelete={() => requestDeleteList(category)}
               onEditPlace={(place) => {
                 setEditError('');
                 setEditingPlace(place);
@@ -255,7 +402,7 @@ export default function SavedListsPanel({ savedPlaces }) {
                 try {
                   await updateSavedMarkerPhotos(place.id, photos);
                 } catch (error) {
-                  if (error.photosUpdated) {
+                  if (error instanceof Error && 'photosUpdated' in error && error.photosUpdated) {
                     Alert.alert(
                       'Photo removed',
                       'The photo was removed, but its local file could not be deleted.'
@@ -265,20 +412,31 @@ export default function SavedListsPanel({ savedPlaces }) {
                 }
               }}
               onDeletePlace={requestDeletePlace}
+              onFocusPlace={onFocusPlace}
             />
           );
         })}
+        {searchQuery.trim() && !markers.some((marker) => {
+          const query = searchQuery.trim().toLocaleLowerCase();
+          return (filters.listType === 'all' || marker.listType === filters.listType)
+            && (filters.progress === 'all' || marker.progress === filters.progress)
+            && `${marker.title} ${marker.notes}`.toLocaleLowerCase().includes(query);
+        }) ? (
+          <Text style={styles.cardEmptyList}>No saved places match this search.</Text>
+        ) : null}
       </ScrollView>
       <EditSavedPlaceDialog
         place={editingPlace}
         errorMessage={editError}
         listCategories={listCategories}
+        notes={editingPlace?.notes ?? ''}
+        visitedAt={formatPlaceDate(editingPlace?.visitedAt)}
         onPhotosChange={async (photos) => {
           if (!editingPlace) return;
           try {
             await updateSavedMarkerPhotos(editingPlace.id, photos);
           } catch (error) {
-            if (error.photosUpdated) {
+            if (error instanceof Error && 'photosUpdated' in error && error.photosUpdated) {
               setEditingPlace((place) => (place ? { ...place, photos } : place));
             }
             throw error;
@@ -295,6 +453,12 @@ export default function SavedListsPanel({ savedPlaces }) {
             setEditError('Could not update this place. Please try again.');
           }
         }}
+        onNotesChange={(notes) => setEditingPlace((place) => (
+          place ? { ...place, notes } : place
+        ))}
+        onVisitedAtChange={(visitedAt) => setEditingPlace((place) => (
+          place ? { ...place, visitedAt } : place
+        ))}
         onTitleChange={(title) => setEditingPlace((place) => (
           place ? { ...place, title } : place
         ))}
@@ -304,6 +468,31 @@ export default function SavedListsPanel({ savedPlaces }) {
         onClose={closeEditor}
         onSave={saveEditedPlace}
         onDelete={() => editingPlace && requestDeletePlace(editingPlace)}
+      />
+      <ConfirmDialog
+        visible={Boolean(deleteDialog)}
+        title={deleteDialog?.title ?? ''}
+        message={deleteDialog?.message ?? ''}
+        onCancel={() => setDeleteDialog(null)}
+        onConfirm={() => {
+          const confirm = deleteDialog?.onConfirm;
+          setDeleteDialog(null);
+          confirm?.();
+        }}
+      />
+      <EditListNameDialog
+        visible={Boolean(editingList)}
+        name={listNameDraft}
+        errorMessage={listNameError}
+        onNameChange={(name) => {
+          setListNameDraft(name);
+          setListNameError('');
+        }}
+        onClose={() => {
+          setEditingList(null);
+          setListNameError('');
+        }}
+        onSave={saveListName}
       />
       <CreateListDialog
         visible={createListVisible}
@@ -333,9 +522,28 @@ export default function SavedListsPanel({ savedPlaces }) {
     </View>
   );
 }
+/**
+ * @param {{
+ *   category: SavedListCategory,
+ *   places: SavedPlace[],
+ *   listHasPlaces: boolean,
+ *   expanded: boolean,
+ *   onToggle: () => void,
+ *   onChangeIcon: () => void,
+ *   onEditPlace: (place: SavedPlace) => void,
+ *   onProgressChange: (place: SavedPlace) => void,
+ *   onPhotosChange: (place: SavedPlace, photos: string[]) => Promise<void>,
+ *   onDeletePlace: (place: SavedPlace) => void,
+ *   isCustom: boolean,
+ *   onRename: () => void,
+ *   onDelete: () => void,
+ *   onFocusPlace: (place: SavedPlace) => void
+ * }} props
+ */
 function SavedListCard({
   category,
   places,
+  listHasPlaces,
   expanded,
   onToggle,
   onChangeIcon,
@@ -343,6 +551,10 @@ function SavedListCard({
   onProgressChange,
   onPhotosChange,
   onDeletePlace,
+  isCustom,
+  onRename,
+  onDelete,
+  onFocusPlace,
 }) {
   return (
     <View style={styles.card}>
@@ -376,6 +588,34 @@ function SavedListCard({
         >
           <MaterialIcons name="edit" size={ICON_SIZE.small} color={COLORS.textSecondary} />
         </TouchableOpacity>
+        {isCustom ? (
+          <>
+            <TouchableOpacity
+              accessibilityRole="button"
+              accessibilityLabel={`Rename ${category.label}`}
+              onPress={onRename}
+              style={styles.cardChangeIconButton}
+            >
+              <MaterialIcons
+                name="drive-file-rename-outline"
+                size={ICON_SIZE.small}
+                color={COLORS.textSecondary}
+              />
+            </TouchableOpacity>
+            <TouchableOpacity
+              accessibilityRole="button"
+              accessibilityLabel={`Delete ${category.label}`}
+              onPress={onDelete}
+              style={styles.cardChangeIconButton}
+            >
+              <MaterialIcons
+                name="delete-outline"
+                size={ICON_SIZE.delete}
+                color={listHasPlaces ? COLORS.placeholder : COLORS.danger}
+              />
+            </TouchableOpacity>
+          </>
+        ) : null}
       </View>
 
       {expanded ? (
@@ -385,7 +625,14 @@ function SavedListCard({
               <View key={place.id} style={styles.placeEntry}>
                 <View style={styles.cardPlaceRow}>
                   <MaterialIcons name="place" size={18} color={category.color} />
-                  <Text style={styles.cardPlaceName} numberOfLines={1}>{place.title}</Text>
+                  <TouchableOpacity
+                    accessibilityRole="button"
+                    accessibilityLabel={`Show ${place.title} on map`}
+                    onPress={() => onFocusPlace(place)}
+                    style={styles.cardPlaceNameButton}
+                  >
+                    <Text style={styles.cardPlaceName} numberOfLines={1}>{place.title}</Text>
+                  </TouchableOpacity>
                   <TouchableOpacity
                     accessibilityRole="button"
                     accessibilityLabel={`Change progress for ${place.title}. Current status: ${PLACE_PROGRESS_LABELS[place.progress] || PLACE_PROGRESS_LABELS.unvisited}`}
@@ -437,12 +684,34 @@ function SavedListCard({
   );
 }
 
+/**
+ * @param {{
+ *   place: SavedPlace | null,
+ *   errorMessage: string,
+ *   listCategories: SavedListCategory[],
+ *   notes: string,
+ *   visitedAt: string,
+ *   onPhotosChange: (photos: string[]) => Promise<void>,
+ *   onProgressChange: (progress: string) => void,
+ *   onNotesChange: (notes: string) => void,
+ *   onVisitedAtChange: (visitedAt: string) => void,
+ *   onTitleChange: (title: string) => void,
+ *   onListTypeChange: (listType: string) => void,
+ *   onClose: () => void,
+ *   onSave: () => void,
+ *   onDelete: () => void
+ * }} props
+ */
 function EditSavedPlaceDialog({
   place,
   errorMessage,
   listCategories,
+  notes,
+  visitedAt,
   onPhotosChange,
   onProgressChange,
+  onNotesChange,
+  onVisitedAtChange,
   onTitleChange,
   onListTypeChange,
   onClose,
@@ -460,8 +729,12 @@ function EditSavedPlaceDialog({
       placeId={place?.id ?? null}
       photos={place?.photos ?? []}
       progress={place?.progress ?? 'unvisited'}
+      notes={notes}
+      visitedAt={visitedAt}
       onPhotosChange={onPhotosChange}
       onProgressChange={onProgressChange}
+      onNotesChange={onNotesChange}
+      onVisitedAtChange={onVisitedAtChange}
       onTitleChange={onTitleChange}
       onListTypeChange={onListTypeChange}
       onClose={onClose}
@@ -471,6 +744,74 @@ function EditSavedPlaceDialog({
   );
 }
 
+/**
+ * @param {{
+ *   visible: boolean,
+ *   name: string,
+ *   errorMessage: string,
+ *   onNameChange: (name: string) => void,
+ *   onClose: () => void,
+ *   onSave: () => void
+ * }} props
+ */
+function EditListNameDialog({ visible, name, errorMessage, onNameChange, onClose, onSave }) {
+  const insets = useSafeAreaInsets();
+
+  return (
+    <Modal animationType="fade" transparent visible={visible} onRequestClose={onClose}>
+      <KeyboardAvoidingView
+        style={[
+          styles.dialogOverlay,
+          {
+            paddingTop: Math.max(insets.top, SPACING.md),
+            paddingBottom: Math.max(insets.bottom, SPACING.md),
+          },
+        ]}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
+        <Pressable style={styles.dialogBackdrop} onPress={onClose} />
+        <Pressable
+          style={styles.dialogContent}
+          onPress={(event) => event.stopPropagation()}
+        >
+          <Text style={styles.dialogTitle}>Rename list</Text>
+          <TextInput
+            maxLength={INPUT_LIMITS.listName}
+            placeholder="List name"
+            placeholderTextColor={COLORS.placeholder}
+            value={name}
+            onChangeText={onNameChange}
+            onSubmitEditing={onSave}
+            returnKeyType="done"
+            style={styles.dialogNameInput}
+          />
+          {errorMessage ? <Text style={styles.dialogError}>{errorMessage}</Text> : null}
+          <DialogActions
+            cancelLabel={ACTION_LABELS.cancel}
+            saveLabel={ACTION_LABELS.save}
+            onClose={onClose}
+            onSave={onSave}
+          />
+        </Pressable>
+      </KeyboardAvoidingView>
+    </Modal>
+  );
+}
+
+/**
+ * @param {{
+ *   visible: boolean,
+ *   name: string,
+ *   emoji: string,
+ *   selectedColorId: string | null,
+ *   onColorChange: (color: ListColorOption | null) => void,
+ *   errorMessage: string,
+ *   onNameChange: (name: string) => void,
+ *   onEmojiChange: (emoji: string) => void,
+ *   onClose: () => void,
+ *   onCreate: () => void
+ * }} props
+ */
 function CreateListDialog({
   visible,
   name,
@@ -548,6 +889,18 @@ function CreateListDialog({
   );
 }
 
+/**
+ * @param {{
+ *   list: SavedListCategory | undefined,
+ *   emoji: string,
+ *   selectedColorId: string | null,
+ *   errorMessage: string,
+ *   onEmojiChange: (emoji: string) => void,
+ *   onColorChange: (color: ListColorOption | null) => void,
+ *   onClose: () => void,
+ *   onSave: () => void
+ * }} props
+ */
 function EditListIconDialog({
   list,
   emoji,
@@ -617,6 +970,14 @@ function EditListIconDialog({
   );
 }
 
+/**
+ * @param {{
+ *   cancelLabel: string,
+ *   saveLabel: string,
+ *   onClose: () => void,
+ *   onSave: () => void
+ * }} props
+ */
 function DialogActions({ cancelLabel, saveLabel, onClose, onSave }) {
   return (
     <View style={styles.dialogActions}>

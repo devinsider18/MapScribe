@@ -5,14 +5,18 @@ import { ICON_SIZE } from '../constants/theme';
 
 /**
  * @param {{
- *   category: { icon: string, color: string, emoji?: string | null },
+ *   category: {
+ *     icon: import('react').ComponentProps<typeof MaterialIcons>['name'],
+ *     color: string,
+ *     emoji?: string | null
+ *   },
  *   size?: number,
  *   color?: string,
  *   style?: import('react-native').StyleProp<import('react-native').TextStyle>
  * }} props
  */
 export default function ListCategoryIcon({ category, size = ICON_SIZE.medium, color, style }) {
-  const materialIcon = getMaterialIconName(category.emoji);
+  const materialIcon = getMaterialIconName(category.emoji ?? '');
 
   if (materialIcon) {
     return (

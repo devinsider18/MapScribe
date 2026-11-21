@@ -16,6 +16,7 @@ export const PLACE_PROGRESS_ORDER = [
   PLACE_PROGRESS.visited,
 ];
 
+/** @param {string} progress */
 export function getNextPlaceProgress(progress) {
   const currentIndex = PLACE_PROGRESS_ORDER.indexOf(progress);
   return PLACE_PROGRESS_ORDER[(currentIndex + 1) % PLACE_PROGRESS_ORDER.length];

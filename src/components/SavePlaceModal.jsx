@@ -13,6 +13,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LIST_CATEGORIES } from '../constants/listCategories';
 import { ACTION_LABELS } from '../constants/messages.mjs';
 import { COLORS, ICON_SIZE } from '../constants/theme';
+import DatePickerField from './DatePickerField';
 import { PLACE_PROGRESS, PLACE_PROGRESS_LABELS, PLACE_PROGRESS_ORDER } from '../constants/placeProgress.mjs';
 import ListCategoryIcon from './ListCategoryIcon';
 import PlacePhotoGallery from './PlacePhotoGallery';
@@ -35,10 +36,14 @@ import styles from './SavePlaceModal.styles';
  *   progress?: string,
  *   onPhotosChange?: (photos: string[]) => Promise<void>,
  *   onProgressChange?: (progress: string) => void,
+ *   notes?: string,
+ *   visitedAt?: string,
+ *   onNotesChange?: (notes: string) => void,
+ *   onVisitedAtChange?: (visitedAt: string) => void,
  *   listCategories?: Array<{
  *     id: string,
  *     label: string,
- *     icon: string,
+ *     icon: import('react').ComponentProps<typeof import('@expo/vector-icons').MaterialIcons>['name'],
  *     color: string,
  *     bg: string,
  *     emoji?: string | null
@@ -61,6 +66,10 @@ export default function SavePlaceModal({
   progress = PLACE_PROGRESS.unvisited,
   onPhotosChange,
   onProgressChange,
+  notes = '',
+  visitedAt = '',
+  onNotesChange,
+  onVisitedAtChange,
   listCategories = LIST_CATEGORIES,
 }) {
   const insets = useSafeAreaInsets();
@@ -103,6 +112,25 @@ export default function SavePlaceModal({
               value={title}
               onChangeText={onTitleChange}
               autoFocus={!isEditing}
+            />
+
+            <Text style={styles.sectionLabel}>Personal note</Text>
+            <TextInput
+              accessibilityLabel="Personal note"
+              multiline
+              numberOfLines={3}
+              placeholder="What should you remember about this place?"
+              placeholderTextColor={COLORS.placeholder}
+              value={notes}
+              onChangeText={onNotesChange}
+              style={[styles.input, styles.notesInput]}
+            />
+            <Text style={styles.sectionLabel}>Visit date (optional)</Text>
+            <DatePickerField
+              label="Visit date"
+              value={visitedAt}
+              onChangeText={onVisitedAtChange}
+              allowClear
             />
 
             <Text style={styles.sectionLabel}>Select List</Text>

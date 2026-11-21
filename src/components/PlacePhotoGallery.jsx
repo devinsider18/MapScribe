@@ -34,12 +34,18 @@ export default function PlacePhotoGallery({
   onPhotosChange,
   editable = true,
 }) {
-  const [viewingPhoto, setViewingPhoto] = useState(null);
+  const [viewingPhoto, setViewingPhoto] = useState(
+    /** @type {string | null} */ (null)
+  );
   const [busy, setBusy] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const insets = useSafeAreaInsets();
 
+  /** @param {'camera' | 'library'} source */
   const addPhoto = async (source) => {
+    const changePhotos = onPhotosChange;
+    if (!changePhotos) return;
+
     setBusy(true);
     setErrorMessage('');
 
@@ -63,7 +69,7 @@ export default function PlacePhotoGallery({
 
       const savedUri = await copyPhotoToPlaceStorage(result.assets[0], placeId);
       try {
-        await onPhotosChange([...photos, savedUri]);
+        await changePhotos([...photos, savedUri]);
       } catch (error) {
         try {
           await deletePlacePhotoFiles([savedUri]);
@@ -88,16 +94,22 @@ export default function PlacePhotoGallery({
     ]);
   };
 
+  /** @param {string} uri */
   const removePhoto = async (uri) => {
+    const changePhotos = onPhotosChange;
+    if (!changePhotos) return;
+
     setBusy(true);
     setErrorMessage('');
     try {
-      await onPhotosChange(photos.filter((photo) => photo !== uri));
+      await changePhotos(photos.filter((photo) => photo !== uri));
     } catch (error) {
       console.error('Failed to remove a place photo:', error);
-      setErrorMessage(error.photosUpdated
+      setErrorMessage(
+        error instanceof Error && 'photosUpdated' in error && error.photosUpdated
         ? 'Photo removed, but its local file could not be cleaned up.'
-        : 'Could not remove this photo. Please try again.');
+        : 'Could not remove this photo. Please try again.'
+      );
     } finally {
       setBusy(false);
     }
@@ -107,7 +119,7 @@ export default function PlacePhotoGallery({
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.label}>Photos ({photos.length}/{MAX_PLACE_PHOTOS})</Text>
-        {editable && photos.length < MAX_PLACE_PHOTOS ? (
+        {editable && onPhotosChange && photos.length < MAX_PLACE_PHOTOS ? (
           <TouchableOpacity
             accessibilityRole="button"
             disabled={busy}
@@ -131,7 +143,7 @@ export default function PlacePhotoGallery({
               >
                 <Image source={{ uri }} style={styles.thumbnail} />
               </TouchableOpacity>
-              {editable ? (
+              {editable && onPhotosChange ? (
                 <TouchableOpacity
                   accessibilityRole="button"
                   accessibilityLabel="Remove photo"

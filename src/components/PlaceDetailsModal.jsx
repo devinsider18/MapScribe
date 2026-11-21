@@ -10,14 +10,15 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { PLACE_PROGRESS_LABELS } from '../constants/placeProgress.mjs';
+import { formatPlaceDate } from '../constants/placeDates.mjs';
 import { COLORS, FONT_SIZE, ICON_SIZE, RADII, SPACING } from '../constants/theme';
 import ListCategoryIcon from './ListCategoryIcon';
 import PlacePhotoGallery from './PlacePhotoGallery';
 
 /**
  * @param {{
- *   place: object | null,
- *   category: object | null,
+ *   place: ReturnType<typeof import('../hooks/useSavedMarkers').default>['markers'][number] | null,
+ *   category: ReturnType<typeof import('../hooks/useSavedMarkers').default>['listCategories'][number],
  *   onClose: () => void,
  *   onEdit: () => void
  * }} props
@@ -74,8 +75,14 @@ export default function PlaceDetailsModal({ place, category, onClose, onEdit }) 
               {PLACE_PROGRESS_LABELS[place.progress] || PLACE_PROGRESS_LABELS.unvisited}
             </Text>
           </View>
+          {place.visitedAt ? (
+            <Text style={styles.visitDate}>
+              Visited on {formatPlaceDate(place.visitedAt)}
+            </Text>
+          ) : null}
 
           <ScrollView style={styles.body} keyboardShouldPersistTaps="handled">
+            {place.notes ? <Text style={styles.notes}>{place.notes}</Text> : null}
             <PlacePhotoGallery
               placeId={place.id}
               photos={place.photos ?? []}
@@ -164,6 +171,17 @@ const styles = StyleSheet.create({
     color: COLORS.primary,
     fontSize: FONT_SIZE.small,
     fontWeight: '600',
+  },
+  visitDate: {
+    marginTop: SPACING.sm,
+    color: COLORS.textMuted,
+    fontSize: FONT_SIZE.small,
+  },
+  notes: {
+    color: COLORS.textPrimary,
+    fontSize: FONT_SIZE.body,
+    lineHeight: FONT_SIZE.body * 1.5,
+    marginBottom: SPACING.md,
   },
   body: {
     flexGrow: 1,
